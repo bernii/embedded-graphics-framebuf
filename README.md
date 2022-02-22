@@ -183,7 +183,7 @@ Project Link: [https://github.com/bernii/embedded-graphics-framebuf](https://git
 
 * proven examlpes from [adamgreid](https://github.com/adamgreig) ([imlplementation](https://github.com/adamgreig/walkclock-public/blob/master/firmware/src/framebuf.rs ))
 * [st7789](https://github.com/almindor/st7789) driver by almindor
-* link do czata
+* super helpful [embedded-graphics](https://app.element.io/#/room/#rust-embedded-graphics:matrix.org) matrix chat
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
