@@ -1,6 +1,6 @@
 [package]
 name = "embedded-graphics-framebuf"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 authors = ["Bernard Kobos <bkobos@gmail.com>"]
 license = "MIT"
