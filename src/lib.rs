@@ -21,6 +21,18 @@ impl<C: PixelColor + Default, const X: usize, const Y: usize> FrameBuf<C, X, Y> 
     }
 }
 
+impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a mut FrameBuf<C, X, Y> {
+    type Item = C;
+    type IntoIter = FrameBufIntoIterator<'a, C, X, Y>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        FrameBufIntoIterator {
+            fbuf: self,
+            index: 0,
+        }
+    }
+}
+
 impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a FrameBuf<C, X, Y> {
     type Item = C;
     type IntoIter = FrameBufIntoIterator<'a, C, X, Y>;
@@ -53,13 +65,13 @@ impl<'a, C: PixelColor, const X: usize, const Y: usize> Iterator
     }
 }
 
-impl<C: PixelColor, const X: usize, const Y: usize> OriginDimensions for FrameBuf<C, X, Y> {
+impl<C: PixelColor, const X: usize, const Y: usize> OriginDimensions for &mut FrameBuf<C, X, Y> {
     fn size(&self) -> Size {
         Size::new(X as u32, Y as u32)
     }
 }
 
-impl<C: PixelColor, const X: usize, const Y: usize> DrawTarget for FrameBuf<C, X, Y> {
+impl<C: PixelColor, const X: usize, const Y: usize> DrawTarget for &mut FrameBuf<C, X, Y> {
     type Color = C;
     type Error = core::convert::Infallible;
 
