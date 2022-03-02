@@ -28,7 +28,7 @@
 <h3 align="center">Fraramebuffer implementation for Rust's Embedded-graphics</h3>
 
   <p align="center">
-    Framebuffer approach helps to deal with display flickering when you update multiple parts of the display in separate operations. Intead, with this approach, you're going to write to a in-memory display and push it all at once into your hardware display once the whole picture is drawn.
+    Framebuffer approach helps to deal with display flickering when you update multiple parts of the display in separate operations. Intead, with this approach, you're going to write to a in-memory display and push it all at once into your hardware display when the whole picture is drawn.
     <br /><br />
     This technique is useful when you're updating large portions of screen or just simply don't want to deal with partial display updates. 
     <br />
