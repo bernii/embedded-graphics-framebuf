@@ -147,8 +147,8 @@ Make sure you have your `rust` environment configurated
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] add tests
-- [ ] add rustdocs
+- [x] add tests
+- [x] add rustdocs
 - [ ] CI integration with GithHub Actions
 - [ ] better error generation & handling
 
