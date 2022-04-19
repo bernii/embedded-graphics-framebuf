@@ -210,7 +210,13 @@ impl<'a, C: PixelColor> DrawTarget for FrameBuf<'a, C> {
         I: IntoIterator<Item = Pixel<Self::Color>>,
     {
         for Pixel(coord, color) in pixels.into_iter() {
-            self[coord] = color;
+            if coord.x >= 0
+                && coord.x < self.width as i32
+                && coord.y >= 0
+                && coord.y < self.height as i32
+            {
+                self[coord] = color;
+            }
         }
         Ok(())
     }
