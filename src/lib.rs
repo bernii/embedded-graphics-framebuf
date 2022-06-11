@@ -36,7 +36,7 @@ use std::convert::TryInto;
 ///
 /// static mut FBUFF: FrameBuf<Rgb565, 240_usize, 135_usize> = FrameBuf([[Rgb565::BLACK; 240]; 135]);
 /// let mut fbuff = unsafe { &mut FBUFF };
-/// fbuff.clear_black();
+/// fbuff.reset();
 /// Text::new(
 ///    &"Good luck!",
 ///    Point::new(10, 13),
@@ -49,8 +49,8 @@ use std::convert::TryInto;
 pub struct FrameBuf<C: PixelColor, const X: usize, const Y: usize>(pub [[C; X]; Y]);
 
 impl<C: PixelColor + Default, const X: usize, const Y: usize> FrameBuf<C, X, Y> {
-    /// Set all pixels to black.
-    pub fn clear_black(&mut self) {
+    /// Set all pixels to their [Default] value.
+    pub fn reset(&mut self) {
         for x in 0..X {
             for y in 0..Y {
                 self.0[y][x] = C::default();
@@ -180,7 +180,7 @@ mod tests {
     #[test]
     fn clears_buffer() {
         let mut fbuf = FrameBuf([[Rgb565::WHITE; 5]; 10]);
-        fbuf.clear_black();
+        fbuf.reset();
 
         let px_nums = get_px_nums(fbuf);
 
