@@ -13,6 +13,36 @@
 //!
 //! The approach has been tested on TTGO (esp32) with ST7789
 //!
+//! ## Usage example
+//!
+//! ```rust
+//! use embedded_graphics::{
+//!     mono_font::{ascii::FONT_10X20, MonoTextStyle},
+//!     pixelcolor::Rgb565,
+//!     prelude::*,
+//!     text::Text,
+//! };
+//! use embedded_graphics_framebuf::FrameBuf;
+//!
+//! static mut FBUFF: FrameBuf<Rgb565, 240_usize, 135_usize> =
+//!     FrameBuf([[Rgb565::BLACK; 240]; 135]);
+//!
+//! // Best use a Mutex or simmilar here to avoid the unsafe access to the global buffer
+//! let mut fbuff = unsafe { &mut FBUFF };
+//! fbuff.clear_black();
+//! Text::new(
+//!     &"Good luck!",
+//!     Point::new(10, 13),
+//!     MonoTextStyle::new(&FONT_10X20, Rgb565::WHITE.into()),
+//! )
+//! .draw(&mut fbuff)
+//! .unwrap();
+//!
+//! // assuming a display here where a viewport is defined first and then the raw data is streamed
+//! // to, e.g. the [ST7735](https://github.com/sajattack/st7735-lcd-rs/blob/master/src/lib.rs)
+//! display.set_pixel_window(0, 0, 240, 135);
+//! display.write_pixels(fbuff.into_iter().map(|px| RawU16::from(px).into_inner()));
+//! ```
 
 use embedded_graphics::{
     draw_target::DrawTarget,
@@ -27,22 +57,26 @@ use std::convert::TryInto;
 ///
 /// # Example
 /// ```
-/// use embedded_graphics::mono_font::ascii::FONT_10X20;
+/// use embedded_graphics::{
+///     mono_font::{ascii::FONT_10X20, MonoTextStyle},
+///     pixelcolor::Rgb565,
+///     prelude::*,
+///     text::Text,
+/// };
 /// use embedded_graphics_framebuf::FrameBuf;
-/// use embedded_graphics::prelude::*;
-/// use embedded_graphics::mono_font::MonoTextStyle;
-/// use embedded_graphics::text::Text;
-/// use embedded_graphics::pixelcolor::Rgb565;
 ///
-/// static mut FBUFF: FrameBuf<Rgb565, 240_usize, 135_usize> = FrameBuf([[Rgb565::BLACK; 240]; 135]);
+/// static mut FBUFF: FrameBuf<Rgb565, 240_usize, 135_usize> =
+///     FrameBuf([[Rgb565::BLACK; 240]; 135]);
 /// let mut fbuff = unsafe { &mut FBUFF };
-/// fbuff.clear_black();
+///
+/// // write "Good luck" into the framebuffer.
 /// Text::new(
-///    &"Good luck!",
-///    Point::new(10, 13),
-///    MonoTextStyle::new(&FONT_10X20, Rgb565::WHITE.into()),
+///     &"Good luck!",
+///     Point::new(10, 13),
+///     MonoTextStyle::new(&FONT_10X20, Rgb565::WHITE.into()),
 /// )
-/// .draw(&mut fbuff).unwrap();
+/// .draw(&mut fbuff)
+/// .unwrap();
 /// ```
 #[repr(transparent)]
 #[derive(Copy, Clone)]
@@ -83,9 +117,8 @@ impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a Fra
     }
 }
 
-/// Gives you ability to convert the `FrameBuf` data into an iterator. This is
-/// commonly used when iterating over pixels in order to send the pixel data
-/// into the hardware display.
+/// Iterator type for [FrameBuf]. This is commonly used when iterating over
+/// pixels in order to send the pixel data into the hardware display.
 pub struct FrameBufIntoIterator<'a, C: PixelColor, const X: usize, const Y: usize> {
     fbuf: &'a FrameBuf<C, X, Y>,
     index: usize,
