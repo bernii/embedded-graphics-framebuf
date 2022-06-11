@@ -143,13 +143,13 @@ impl<'a, C: PixelColor, const X: usize, const Y: usize> Iterator for PixelIterat
     }
 }
 
-impl<C: PixelColor, const X: usize, const Y: usize> OriginDimensions for &mut FrameBuf<C, X, Y> {
+impl<C: PixelColor, const X: usize, const Y: usize> OriginDimensions for FrameBuf<C, X, Y> {
     fn size(&self) -> Size {
         Size::new(X as u32, Y as u32)
     }
 }
 
-impl<C: PixelColor, const X: usize, const Y: usize> DrawTarget for &mut FrameBuf<C, X, Y> {
+impl<C: PixelColor, const X: usize, const Y: usize> DrawTarget for FrameBuf<C, X, Y> {
     type Color = C;
     type Error = core::convert::Infallible;
 
@@ -195,7 +195,7 @@ mod tests {
     use super::*;
 
     fn get_px_nums<'a, C: PixelColor, const X: usize, const Y: usize>(
-        fbuf: FrameBuf<C, X, Y>,
+        fbuf: &FrameBuf<C, X, Y>,
     ) -> HashMap<C, i32>
     where
         C: Hash,
@@ -220,7 +220,7 @@ mod tests {
         let mut fbuf = FrameBuf([[Rgb565::WHITE; 5]; 10]);
         fbuf.clear_black();
 
-        let px_nums = get_px_nums(fbuf);
+        let px_nums = get_px_nums(&fbuf);
 
         assert_eq!(px_nums.get(&Rgb565::BLACK).unwrap(), &50);
         assert_eq!(px_nums.get(&Rgb565::WHITE), None);
@@ -228,10 +228,10 @@ mod tests {
 
     #[test]
     fn clears_with_color() {
-        let mut fbuf = &mut FrameBuf([[Rgb565::RED; 5]; 5]);
+        let mut fbuf = FrameBuf([[Rgb565::RED; 5]; 5]);
         fbuf.clear(Rgb565::BLUE).unwrap();
 
-        let px_nums = get_px_nums(*fbuf);
+        let px_nums = get_px_nums(&fbuf);
 
         assert_eq!(px_nums.get(&Rgb565::BLUE).unwrap(), &25);
         assert_eq!(px_nums.get(&Rgb565::RED), None);
@@ -239,7 +239,7 @@ mod tests {
 
     #[test]
     fn draws_into_display() {
-        let mut fbuf = &mut FrameBuf([[BinaryColor::Off; 12]; 11]);
+        let mut fbuf = FrameBuf([[BinaryColor::Off; 12]; 11]);
         let mut display: MockDisplay<BinaryColor> = MockDisplay::new();
 
         // Horizontal line
@@ -283,7 +283,7 @@ mod tests {
 
     #[test]
     fn usable_as_draw_target() {
-        let fbuf = &mut FrameBuf([[BinaryColor::Off; 15]; 5]);
+        let fbuf = FrameBuf([[BinaryColor::Off; 15]; 5]);
         draw_into_drawtarget(fbuf)
     }
 
