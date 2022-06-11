@@ -14,6 +14,8 @@
 //! The approach has been tested on TTGO (esp32) with ST7789
 //!
 
+#![no_std]
+
 use embedded_graphics::{
     draw_target::DrawTarget,
     geometry::OriginDimensions,
@@ -141,6 +143,8 @@ impl<C: PixelColor, const X: usize, const Y: usize> DrawTarget for &mut FrameBuf
 
 #[cfg(test)]
 mod tests {
+    extern crate std;
+
     use embedded_graphics::mock_display::MockDisplay;
     use embedded_graphics::pixelcolor::BinaryColor;
     use embedded_graphics::prelude::Point;
