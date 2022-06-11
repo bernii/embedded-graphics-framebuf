@@ -19,7 +19,7 @@
 use embedded_graphics::{
     draw_target::DrawTarget,
     geometry::OriginDimensions,
-    prelude::{PixelColor, Size, Point},
+    prelude::{PixelColor, Point, Size},
     Pixel,
 };
 
@@ -59,13 +59,31 @@ impl<C: PixelColor + Default, const X: usize, const Y: usize> FrameBuf<C, X, Y> 
         }
     }
 }
-
-impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a mut FrameBuf<C, X, Y> {
-    type Item = C;
-    type IntoIter = FrameBufIntoIterator<'a, C, X, Y>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        FrameBufIntoIterator {
+impl<C: PixelColor, const X: usize, const Y: usize> FrameBuf<C, X, Y> {
+    /// Creates an iterator over all [Pixels](Pixel) in the frame buffer. Can be
+    /// used e.g., for rendering the framebuffer to the physical display.
+    ///
+    /// # Example
+    /// ```rust
+    /// use embedded_graphics::{
+    ///     draw_target::DrawTarget,
+    ///     mock_display::MockDisplay,
+    ///     pixelcolor::BinaryColor,
+    ///     prelude::{Point, Primitive},
+    ///     primitives::{Line, PrimitiveStyle},
+    ///     Drawable,
+    /// };
+    /// use embedded_graphics_framebuf::FrameBuf;
+    /// let mut fbuf = &mut FrameBuf([[BinaryColor::Off; 12]; 11]);
+    /// let mut display: MockDisplay<BinaryColor> = MockDisplay::new();
+    /// Line::new(Point::new(2, 2), Point::new(10, 2))
+    ///     .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 2))
+    ///     .draw(&mut fbuf)
+    ///     .unwrap();
+    /// display.draw_iter(fbuf.pixels()).unwrap();
+    /// ```
+    pub fn pixels(&self) -> PixelIterator<C, X, Y> {
+        PixelIterator {
             fbuf: self,
             index: 0,
         }
@@ -73,14 +91,11 @@ impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a mut
 }
 
 impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a FrameBuf<C, X, Y> {
-    type Item = C;
-    type IntoIter = FrameBufIntoIterator<'a, C, X, Y>;
+    type Item = Pixel<C>;
+    type IntoIter = PixelIterator<'a, C, X, Y>;
 
     fn into_iter(self) -> Self::IntoIter {
-        FrameBufIntoIterator {
-            fbuf: self,
-            index: 0,
-        }
+        self.pixels()
     }
 }
 
@@ -105,6 +120,26 @@ impl<'a, C: PixelColor, const X: usize, const Y: usize> Iterator
         }
         self.index += 1;
         Some(self.fbuf.0[y][x])
+    }
+}
+
+/// An iterator for all [Pixels](Pixel) in the framebuffer.
+pub struct PixelIterator<'a, C: PixelColor, const X: usize, const Y: usize> {
+    fbuf: &'a FrameBuf<C, X, Y>,
+    index: usize,
+}
+
+impl<'a, C: PixelColor, const X: usize, const Y: usize> Iterator for PixelIterator<'a, C, X, Y> {
+    type Item = Pixel<C>;
+    fn next(&mut self) -> Option<Pixel<C>> {
+        let y = self.index / X;
+        let x = self.index - y * X;
+
+        if self.index >= X * Y {
+            return None;
+        }
+        self.index += 1;
+        Some(Pixel(Point::new(x as i32, y as i32), self.fbuf.0[y][x]))
     }
 }
 
@@ -219,13 +254,7 @@ mod tests {
             .draw(&mut fbuf)
             .unwrap();
 
-        let pixels = fbuf.into_iter().enumerate().map(|(i, px)| {
-            let y = (i / 12) as i32;
-            let x = (i as i32 - y * 12) as i32;
-            let point = Point { x, y };
-            Pixel(point, px)
-        });
-        display.draw_iter(pixels).unwrap();
+        display.draw_iter(fbuf.pixels()).unwrap();
         display.assert_pattern(&[
             "............",
             "..#########.",
