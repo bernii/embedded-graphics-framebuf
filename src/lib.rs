@@ -1,18 +1,42 @@
 //! # Embedded Graphics FrameBuffer
 //!
-//! `embedded-graphics-framebuf` is a generalized frame buffer implementation
-//! for use with Rust's `embedded-graphics` library.
+//! [embedded-graphics-framebuf](https://crates.io/crates/embedded-graphics-framebuf) is a
+//! generalized frame buffer implementation for use with Rust's
+//! [`embedded-graphics`](https://crates.io/crates/embedded-graphics) library.
 //!
-//! Framebuffer approach helps to deal with display flickering when you update
-//! multiple parts of the display in separate operations. Instead, with this
-//! approach, you're going to write to a in-memory display and push it all
+//! The framebuffer approach helps to deal with display flickering when you
+//! update multiple parts of the display in separate operations. Instead, with
+//! this approach, you're going to write to a in-memory display and push it all
 //! at once into your hardware display when the whole picture is drawn.
 //!
 //! This technique is useful when you're updating large portions of screen
 //! or just simply don't want to deal with partial display updates.
+//! The downside is a higher RAM consumption for to the framebuffer.
 //!
 //! The approach has been tested on TTGO (esp32) with ST7789
 //!
+//! ## Usage example
+//!
+//! ```rust
+//! use embedded_graphics::{
+//!     draw_target::DrawTarget,
+//!     mock_display::MockDisplay,
+//!     pixelcolor::BinaryColor,
+//!     prelude::{Point, Primitive},
+//!     primitives::{Line, PrimitiveStyle},
+//!     Drawable,
+//! };
+//! use embedded_graphics_framebuf::FrameBuf;
+//!
+//! let mut fbuf = FrameBuf([[BinaryColor::Off; 12]; 11]);
+//!
+//! let mut display: MockDisplay<BinaryColor> = MockDisplay::new();
+//! Line::new(Point::new(2, 2), Point::new(10, 2))
+//!     .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 2))
+//!     .draw(&mut fbuf)
+//!     .unwrap();
+//! display.draw_iter(fbuf.pixels()).unwrap();
+//! ```
 
 #![no_std]
 
@@ -23,27 +47,30 @@ use embedded_graphics::{
     Pixel,
 };
 
-/// Constructs frame buffer in memory. Lets you define the size (width & height)
-/// and pixel type your using in your display (RGB, Monochrome etc.)
+/// Constructs a frame buffer in memory. Lets you define the width(`X`), height
+/// (`Y`) and pixel type your using in your display (RGB, Monochrome etc.)
 ///
 /// # Example
 /// ```
-/// use embedded_graphics::mono_font::ascii::FONT_10X20;
+/// use embedded_graphics::{
+///     mono_font::{ascii::FONT_10X20, MonoTextStyle},
+///     pixelcolor::Rgb565,
+///     prelude::*,
+///     text::Text,
+/// };
 /// use embedded_graphics_framebuf::FrameBuf;
-/// use embedded_graphics::prelude::*;
-/// use embedded_graphics::mono_font::MonoTextStyle;
-/// use embedded_graphics::text::Text;
-/// use embedded_graphics::pixelcolor::Rgb565;
 ///
-/// static mut FBUFF: FrameBuf<Rgb565, 240_usize, 135_usize> = FrameBuf([[Rgb565::BLACK; 240]; 135]);
-/// let mut fbuff = unsafe { &mut FBUFF };
-/// fbuff.reset();
+/// // Create a framebuffer for a 16-Bit 240x135px display
+/// let mut fbuff = FrameBuf([[Rgb565::BLACK; 240]; 135]);
+///
+/// // write "Good luck" into the framebuffer.
 /// Text::new(
-///    &"Good luck!",
-///    Point::new(10, 13),
-///    MonoTextStyle::new(&FONT_10X20, Rgb565::WHITE.into()),
+///     &"Good luck!",
+///     Point::new(10, 13),
+///     MonoTextStyle::new(&FONT_10X20, Rgb565::WHITE.into()),
 /// )
-/// .draw(&mut fbuff).unwrap();
+/// .draw(&mut fbuff)
+/// .unwrap();
 /// ```
 #[repr(transparent)]
 #[derive(Copy, Clone)]
@@ -61,7 +88,7 @@ impl<C: PixelColor + Default, const X: usize, const Y: usize> FrameBuf<C, X, Y> 
 }
 impl<C: PixelColor, const X: usize, const Y: usize> FrameBuf<C, X, Y> {
     /// Creates an iterator over all [Pixels](Pixel) in the frame buffer. Can be
-    /// used e.g., for rendering the framebuffer to the physical display.
+    /// used for rendering the framebuffer to the physical display.
     ///
     /// # Example
     /// ```rust
@@ -74,7 +101,7 @@ impl<C: PixelColor, const X: usize, const Y: usize> FrameBuf<C, X, Y> {
     ///     Drawable,
     /// };
     /// use embedded_graphics_framebuf::FrameBuf;
-    /// let mut fbuf = &mut FrameBuf([[BinaryColor::Off; 12]; 11]);
+    /// let mut fbuf = FrameBuf([[BinaryColor::Off; 12]; 11]);
     /// let mut display: MockDisplay<BinaryColor> = MockDisplay::new();
     /// Line::new(Point::new(2, 2), Point::new(10, 2))
     ///     .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 2))
@@ -102,7 +129,9 @@ impl<C: PixelColor, const X: usize, const Y: usize> FrameBuf<C, X, Y> {
     /// assert_eq!(raw_iter.next().unwrap(), Rgb565::new(1, 2, 3));
     /// ```
     ///
-    /// One could use it for instance to directly write to a display like the [ST7735](https://docs.rs/st7735-lcd/0.8.1/st7735_lcd/struct.ST7735.html) for a more direct writing.
+    /// One could use it for instance to directly write to a display like the
+    /// [ST7735](https://docs.rs/st7735-lcd/0.8.1/st7735_lcd/struct.ST7735.html) for direct
+    /// transfer of the pixel values.
     ///
     /// ```ignore
     /// let mut fbuf = FrameBuf([[Rgb565::BLACK; 128]; 160]);
