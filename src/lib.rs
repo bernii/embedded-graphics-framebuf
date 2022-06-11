@@ -52,8 +52,8 @@ pub struct FrameBuf<C: PixelColor, const X: usize, const Y: usize>(pub [[C; X]; 
 impl<C: PixelColor + Default, const X: usize, const Y: usize> FrameBuf<C, X, Y> {
     /// Set all pixels to black.
     pub fn clear_black(&mut self) {
-        for x in 0..X {
-            for y in 0..Y {
+        for y in 0..Y {
+            for x in 0..X {
                 self.0[y][x] = C::default();
             }
         }
@@ -132,8 +132,8 @@ impl<C: PixelColor, const X: usize, const Y: usize> DrawTarget for &mut FrameBuf
     }
 
     fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error> {
-        for x in 0..X {
-            for y in 0..Y {
+        for y in 0..Y {
+            for x in 0..X {
                 self.0[y][x] = color;
             }
         }
