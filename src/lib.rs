@@ -61,10 +61,10 @@ impl<C: PixelColor + Default, const X: usize, const Y: usize> FrameBuf<C, X, Y> 
 
 impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a mut FrameBuf<C, X, Y> {
     type Item = C;
-    type IntoIter = FrameBufIntoIterator<'a, C, X, Y>;
+    type IntoIter = FrameBufIterator<'a, C, X, Y>;
 
     fn into_iter(self) -> Self::IntoIter {
-        FrameBufIntoIterator {
+        FrameBufIterator {
             fbuf: self,
             index: 0,
         }
@@ -73,10 +73,10 @@ impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a mut
 
 impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a FrameBuf<C, X, Y> {
     type Item = C;
-    type IntoIter = FrameBufIntoIterator<'a, C, X, Y>;
+    type IntoIter = FrameBufIterator<'a, C, X, Y>;
 
     fn into_iter(self) -> Self::IntoIter {
-        FrameBufIntoIterator {
+        FrameBufIterator {
             fbuf: self,
             index: 0,
         }
@@ -86,14 +86,12 @@ impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a Fra
 /// Gives you ability to convert the `FrameBuf` data into an iterator. This is
 /// commonly used when iterating over pixels in order to send the pixel data
 /// into the hardware display.
-pub struct FrameBufIntoIterator<'a, C: PixelColor, const X: usize, const Y: usize> {
+pub struct FrameBufIterator<'a, C: PixelColor, const X: usize, const Y: usize> {
     fbuf: &'a FrameBuf<C, X, Y>,
     index: usize,
 }
 
-impl<'a, C: PixelColor, const X: usize, const Y: usize> Iterator
-    for FrameBufIntoIterator<'a, C, X, Y>
-{
+impl<'a, C: PixelColor, const X: usize, const Y: usize> Iterator for FrameBufIterator<'a, C, X, Y> {
     type Item = C;
     fn next(&mut self) -> Option<C> {
         let y = self.index / X;
