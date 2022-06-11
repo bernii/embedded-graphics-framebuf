@@ -88,6 +88,30 @@ impl<C: PixelColor, const X: usize, const Y: usize> FrameBuf<C, X, Y> {
             index: 0,
         }
     }
+
+    /// Provides an iterator over the underlying raw color data. Useful for
+    /// optimized rendering on certain displays.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use embedded_graphics::pixelcolor::Rgb565;
+    /// use embedded_graphics_framebuf::FrameBuf;
+    /// let mut fbuf = FrameBuf([[Rgb565::new(1, 2, 3); 3]; 3]);
+    /// let mut raw_iter = fbuf.raw_data();
+    /// assert_eq!(raw_iter.next().unwrap(), Rgb565::new(1, 2, 3));
+    /// ```
+    ///
+    /// One could use it for instance to directly write to a display like the [ST7735](https://docs.rs/st7735-lcd/0.8.1/st7735_lcd/struct.ST7735.html) for a more direct writing.
+    ///
+    /// ```ignore
+    /// let mut fbuf = FrameBuf([[Rgb565::BLACK; 128]; 160]);
+    /// display.set_address_window(0, 0, 128, 160);
+    /// display.write_pixels(fbuf.raw_data().map(|px| RawU16::from(px).into_inner()));
+    /// ```
+    pub fn raw_data(&self) -> core::iter::Flatten<core::array::IntoIter<[C; X], Y>> {
+        self.0.into_iter().flatten()
+    }
 }
 
 impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a FrameBuf<C, X, Y> {
@@ -261,5 +285,14 @@ mod tests {
     fn usable_as_draw_target() {
         let fbuf = &mut FrameBuf([[BinaryColor::Off; 15]; 5]);
         draw_into_drawtarget(fbuf)
+    }
+
+    #[test]
+    fn raw_data() {
+        let mut fbuf = FrameBuf([[Rgb565::new(1, 2, 3); 3]; 3]);
+        fbuf.0[0][1] = Rgb565::new(3, 2, 1);
+        let mut raw_iter = fbuf.raw_data();
+        assert_eq!(raw_iter.next().unwrap(), Rgb565::new(1, 2, 3));
+        assert_eq!(raw_iter.next().unwrap(), Rgb565::new(3, 2, 1));
     }
 }
