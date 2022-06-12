@@ -20,21 +20,6 @@ jobs:
           command: build
           args: --release --all-features
 
-  build-nightly:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-      - name: Release build std
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          toolchain: nightly
-          args: --release --all-features
-
   clippy:
     runs-on: ubuntu-latest
     steps:
