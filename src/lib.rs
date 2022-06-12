@@ -27,8 +27,8 @@
 //!     Drawable,
 //! };
 //! use embedded_graphics_framebuf::FrameBuf;
-//!
-//! let mut fbuf = FrameBuf([[BinaryColor::Off; 12]; 11]);
+//! let mut data = [BinaryColor::Off; 12 * 11];
+//! let mut fbuf = FrameBuf::new(&mut data, 12, 11);
 //!
 //! let mut display: MockDisplay<BinaryColor> = MockDisplay::new();
 //! Line::new(Point::new(2, 2), Point::new(10, 2))
@@ -61,7 +61,8 @@ use embedded_graphics::{
 /// use embedded_graphics_framebuf::FrameBuf;
 ///
 /// // Create a framebuffer for a 16-Bit 240x135px display
-/// let mut fbuff = FrameBuf([[Rgb565::BLACK; 240]; 135]);
+/// let mut data = [Rgb565::BLACK; 240 * 135];
+/// let mut fbuff = FrameBuf::new(&mut data, 240, 135);
 ///
 /// // write "Good luck" into the framebuffer.
 /// Text::new(
@@ -72,21 +73,59 @@ use embedded_graphics::{
 /// .draw(&mut fbuff)
 /// .unwrap();
 /// ```
-#[repr(transparent)]
-#[derive(Copy, Clone)]
-pub struct FrameBuf<C: PixelColor, const X: usize, const Y: usize>(pub [[C; X]; Y]);
+// TODO: Once https://github.com/rust-lang/rust/issues/76560 is resolved, change this to `pub struct
+// FrameBuf<C: PixelColor, const X: usize, const Y: usize>(pub [C; X * Y]);`
+pub struct FrameBuf<'a, C: PixelColor> {
+    pub data: &'a mut [C],
+    pub width: usize,
+    pub height: usize,
+}
 
-impl<C: PixelColor + Default, const X: usize, const Y: usize> FrameBuf<C, X, Y> {
+impl<'a, C: PixelColor + Default> FrameBuf<'a, C> {
+    /// Create a new [`FrameBuf`] on top of an existing memory slice.
+    ///
+    /// # Panic
+    /// Panics if the size of the memory does not match the given width and
+    /// height.
+    ///
+    /// # Example
+    /// ```rust
+    /// use embedded_graphics::{pixelcolor::Rgb565, prelude::RgbColor};
+    /// use embedded_graphics_framebuf::FrameBuf;
+    /// let mut data = [Rgb565::BLACK; 240 * 135];
+    /// let mut fbuff = FrameBuf::new(&mut data, 240, 135);
+    /// ```
+    pub fn new(data: &'a mut [C], width: usize, height: usize) -> Self {
+        assert_eq!(data.len(), width * height);
+        Self {
+            data,
+            width,
+            height,
+        }
+    }
+
     /// Set all pixels to their [Default] value.
     pub fn reset(&mut self) {
-        for y in 0..Y {
-            for x in 0..X {
-                self.0[y][x] = C::default();
+        for y in 0..self.height {
+            for x in 0..self.width {
+                self[Point::new(x as i32, y as i32)] = C::default();
             }
         }
     }
 }
-impl<C: PixelColor, const X: usize, const Y: usize> FrameBuf<C, X, Y> {
+impl<'a, C: PixelColor + Sized> core::ops::Index<Point> for FrameBuf<'a, C> {
+    type Output = C;
+    fn index(&self, p: Point) -> &Self::Output {
+        &self.data[self.width * p.y as usize + p.x as usize]
+    }
+}
+impl<'a, C: PixelColor + Sized> core::ops::IndexMut<Point> for FrameBuf<'a, C> {
+    fn index_mut(&mut self, p: Point) -> &mut Self::Output {
+        &mut self.data[self.width * p.y as usize + p.x as usize]
+    }
+}
+
+impl<'a, C: PixelColor> FrameBuf<'a, C> {
     /// Creates an iterator over all [Pixels](Pixel) in the frame buffer. Can be
     /// used for rendering the framebuffer to the physical display.
     ///
@@ -101,7 +140,8 @@ impl<C: PixelColor, const X: usize, const Y: usize> FrameBuf<C, X, Y> {
     ///     Drawable,
     /// };
     /// use embedded_graphics_framebuf::FrameBuf;
-    /// let mut fbuf = FrameBuf([[BinaryColor::Off; 12]; 11]);
+    /// let mut data = [BinaryColor::Off; 12 * 11];
+    /// let mut fbuf = FrameBuf::new(&mut data, 12, 11);
     /// let mut display: MockDisplay<BinaryColor> = MockDisplay::new();
     /// Line::new(Point::new(2, 2), Point::new(10, 2))
     ///     .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 2))
@@ -109,43 +149,17 @@ impl<C: PixelColor, const X: usize, const Y: usize> FrameBuf<C, X, Y> {
     ///     .unwrap();
     /// display.draw_iter(fbuf.pixels()).unwrap();
     /// ```
-    pub fn pixels(&self) -> PixelIterator<C, X, Y> {
+    pub fn pixels(&self) -> PixelIterator<C> {
         PixelIterator {
             fbuf: self,
             index: 0,
         }
     }
-
-    /// Provides an iterator over the underlying raw color data. Useful for
-    /// optimized rendering on certain displays.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use embedded_graphics::pixelcolor::Rgb565;
-    /// use embedded_graphics_framebuf::FrameBuf;
-    /// let mut fbuf = FrameBuf([[Rgb565::new(1, 2, 3); 3]; 3]);
-    /// let mut raw_iter = fbuf.raw_data();
-    /// assert_eq!(raw_iter.next().unwrap(), Rgb565::new(1, 2, 3));
-    /// ```
-    ///
-    /// One could use it for instance to directly write to a display like the
-    /// [ST7735](https://docs.rs/st7735-lcd/0.8.1/st7735_lcd/struct.ST7735.html) for direct
-    /// transfer of the pixel values.
-    ///
-    /// ```ignore
-    /// let mut fbuf = FrameBuf([[Rgb565::BLACK; 128]; 160]);
-    /// display.set_address_window(0, 0, 128, 160);
-    /// display.write_pixels(fbuf.raw_data().map(|px| RawU16::from(px).into_inner()));
-    /// ```
-    pub fn raw_data(&self) -> core::iter::Flatten<core::array::IntoIter<[C; X], Y>> {
-        self.0.into_iter().flatten()
-    }
 }
 
-impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a FrameBuf<C, X, Y> {
+impl<'a, C: PixelColor> IntoIterator for &'a FrameBuf<'a, C> {
     type Item = Pixel<C>;
-    type IntoIter = PixelIterator<'a, C, X, Y>;
+    type IntoIter = PixelIterator<'a, C>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.pixels()
@@ -153,32 +167,33 @@ impl<'a, C: PixelColor, const X: usize, const Y: usize> IntoIterator for &'a Fra
 }
 
 /// An iterator for all [Pixels](Pixel) in the framebuffer.
-pub struct PixelIterator<'a, C: PixelColor, const X: usize, const Y: usize> {
-    fbuf: &'a FrameBuf<C, X, Y>,
+pub struct PixelIterator<'a, C: PixelColor> {
+    fbuf: &'a FrameBuf<'a, C>,
     index: usize,
 }
 
-impl<'a, C: PixelColor, const X: usize, const Y: usize> Iterator for PixelIterator<'a, C, X, Y> {
+impl<'a, C: PixelColor> Iterator for PixelIterator<'a, C> {
     type Item = Pixel<C>;
     fn next(&mut self) -> Option<Pixel<C>> {
-        let y = self.index / X;
-        let x = self.index - y * X;
+        let y = self.index / self.fbuf.width;
+        let x = self.index - y * self.fbuf.width;
 
-        if self.index >= X * Y {
+        if self.index >= self.fbuf.width * self.fbuf.height {
             return None;
         }
         self.index += 1;
-        Some(Pixel(Point::new(x as i32, y as i32), self.fbuf.0[y][x]))
+        let p = Point::new(x as i32, y as i32);
+        Some(Pixel(p, self.fbuf[p]))
     }
 }
 
-impl<C: PixelColor, const X: usize, const Y: usize> OriginDimensions for FrameBuf<C, X, Y> {
+impl<'a, C: PixelColor> OriginDimensions for FrameBuf<'a, C> {
     fn size(&self) -> Size {
-        Size::new(X as u32, Y as u32)
+        Size::new(self.width as u32, self.height as u32)
     }
 }
 
-impl<C: PixelColor, const X: usize, const Y: usize> DrawTarget for FrameBuf<C, X, Y> {
+impl<'a, C: PixelColor> DrawTarget for FrameBuf<'a, C> {
     type Color = C;
     type Error = core::convert::Infallible;
 
@@ -187,18 +202,15 @@ impl<C: PixelColor, const X: usize, const Y: usize> DrawTarget for FrameBuf<C, X
         I: IntoIterator<Item = Pixel<Self::Color>>,
     {
         for Pixel(coord, color) in pixels.into_iter() {
-            if coord.x >= 0 && coord.x < X as i32 && coord.y >= 0 && coord.y < Y as i32 {
-                let Point { x, y } = coord;
-                self.0[y as usize][x as usize] = color;
-            }
+            self[coord] = color;
         }
         Ok(())
     }
 
     fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error> {
-        for y in 0..Y {
-            for x in 0..X {
-                self.0[y][x] = color;
+        for y in 0..self.height {
+            for x in 0..self.width {
+                self[Point::new(x as i32, y as i32)] = color;
             }
         }
         Ok(())
@@ -223,30 +235,29 @@ mod tests {
 
     use super::*;
 
-    fn get_px_nums<'a, C: PixelColor, const X: usize, const Y: usize>(
-        fbuf: &FrameBuf<C, X, Y>,
-    ) -> HashMap<C, i32>
+    fn get_px_nums<'a, C: PixelColor>(fbuf: &FrameBuf<C>) -> HashMap<C, i32>
     where
         C: Hash,
         C: std::cmp::Eq,
     {
         let mut px_nums: HashMap<C, i32> = HashMap::new();
-        for col in fbuf.0.iter() {
-            for px in col {
-                match px_nums.get_mut(px) {
-                    Some(v) => *v += 1,
-                    None => {
-                        px_nums.insert(*px, 1);
-                    }
-                };
-            }
+        for px in fbuf.data.iter() {
+            //for px in col {
+            match px_nums.get_mut(px) {
+                Some(v) => *v += 1,
+                None => {
+                    px_nums.insert(*px, 1);
+                }
+            };
+            //}
         }
         px_nums
     }
 
     #[test]
     fn clears_buffer() {
-        let mut fbuf = FrameBuf([[Rgb565::WHITE; 5]; 10]);
+        let mut data = [Rgb565::WHITE; 5 * 10];
+        let mut fbuf = FrameBuf::new(&mut data, 5, 10);
         fbuf.reset();
 
         let px_nums = get_px_nums(&fbuf);
@@ -257,7 +268,8 @@ mod tests {
 
     #[test]
     fn clears_with_color() {
-        let mut fbuf = FrameBuf([[Rgb565::RED; 5]; 5]);
+        let mut data = [Rgb565::WHITE; 5 * 5];
+        let mut fbuf = FrameBuf::new(&mut data, 5, 5);
         fbuf.clear(Rgb565::BLUE).unwrap();
 
         let px_nums = get_px_nums(&fbuf);
@@ -268,7 +280,8 @@ mod tests {
 
     #[test]
     fn draws_into_display() {
-        let mut fbuf = FrameBuf([[BinaryColor::Off; 12]; 11]);
+        let mut data = [BinaryColor::Off; 12 * 11];
+        let mut fbuf = FrameBuf::new(&mut data, 12, 11);
         let mut display: MockDisplay<BinaryColor> = MockDisplay::new();
 
         // Horizontal line
@@ -312,16 +325,18 @@ mod tests {
 
     #[test]
     fn usable_as_draw_target() {
-        let fbuf = FrameBuf([[BinaryColor::Off; 15]; 5]);
+        let mut data = [BinaryColor::Off; 15 * 5];
+        let fbuf = FrameBuf::new(&mut data, 15, 5);
         draw_into_drawtarget(fbuf)
     }
 
     #[test]
     fn raw_data() {
-        let mut fbuf = FrameBuf([[Rgb565::new(1, 2, 3); 3]; 3]);
-        fbuf.0[0][1] = Rgb565::new(3, 2, 1);
-        let mut raw_iter = fbuf.raw_data();
-        assert_eq!(raw_iter.next().unwrap(), Rgb565::new(1, 2, 3));
-        assert_eq!(raw_iter.next().unwrap(), Rgb565::new(3, 2, 1));
+        let mut data = [Rgb565::new(1, 2, 3); 3 * 3];
+        let mut fbuf = FrameBuf::new(&mut data, 3, 3);
+        fbuf[Point { x: 1, y: 0 }] = Rgb565::new(3, 2, 1);
+        let mut raw_iter = fbuf.data.iter();
+        assert_eq!(*raw_iter.next().unwrap(), Rgb565::new(1, 2, 3));
+        assert_eq!(*raw_iter.next().unwrap(), Rgb565::new(3, 2, 1));
     }
 }
