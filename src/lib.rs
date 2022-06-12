@@ -66,7 +66,15 @@ impl<'a, C: PixelColor + Default> FrameBuf<'a, C> {
     /// let mut fbuff = FrameBuf::new(&mut data, 240, 135);
     /// ```
     pub fn new(data: &'a mut [C], width: usize, height: usize) -> Self {
-        assert_eq!(data.len(), width * height);
+        assert_eq!(
+            data.len(),
+            width * height,
+            "FrameBuf underlying data size does not match width ({}) * height ({}) = {} but is {}",
+            width,
+            height,
+            width * height,
+            data.len()
+        );
         Self {
             data,
             width,
@@ -287,5 +295,11 @@ mod tests {
         let mut data = [BinaryColor::Off; 15 * 5];
         let fbuf = &mut FrameBuf::new(&mut data, 15, 5);
         draw_into_drawtarget(fbuf)
+    }
+    #[test]
+    #[should_panic]
+    fn wrong_data_size() {
+        let mut data = [BinaryColor::Off; 5 * 5];
+        let _ = &mut FrameBuf::new(&mut data, 12, 3);
     }
 }
