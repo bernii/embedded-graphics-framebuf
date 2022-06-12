@@ -96,7 +96,15 @@ impl<'a, C: PixelColor + Default> FrameBuf<'a, C> {
     /// let mut fbuff = FrameBuf::new(&mut data, 240, 135);
     /// ```
     pub fn new(data: &'a mut [C], width: usize, height: usize) -> Self {
-        assert_eq!(data.len(), width * height);
+        assert_eq!(
+            data.len(),
+            width * height,
+            "FrameBuf underlying data size does not match width ({}) * height ({}) = {} but is {}",
+            width,
+            height,
+            width * height,
+            data.len()
+        );
         Self {
             data,
             width,
@@ -338,5 +346,12 @@ mod tests {
         let mut raw_iter = fbuf.data.iter();
         assert_eq!(*raw_iter.next().unwrap(), Rgb565::new(1, 2, 3));
         assert_eq!(*raw_iter.next().unwrap(), Rgb565::new(3, 2, 1));
+    }
+
+    #[test]
+    #[should_panic]
+    fn wrong_data_size() {
+        let mut data = [BinaryColor::Off; 5 * 5];
+        let _ = &mut FrameBuf::new(&mut data, 12, 3);
     }
 }
