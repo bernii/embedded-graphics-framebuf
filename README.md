@@ -141,7 +141,7 @@ Make sure you have your `rust` environment configurated
 
 - [x] add tests
 - [x] add rustdocs
-- [ ] CI integration with GithHub Actions
+- [x] CI integration with GithHub Actions
 - [ ] better error generation & handling
 
 See the [open issues](https://github.com/bernii/embedded-graphics-framebuf/issues) for a full list of proposed features (and known issues).
