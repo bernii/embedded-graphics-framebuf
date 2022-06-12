@@ -2,11 +2,9 @@
 name = "embedded-graphics-framebuf"
 version = "0.1.0"
 edition = "2021"
-authors = ["Bernard Kobos <bkobos@gmail.com>"]
+authors = ["Bernard Kobos <bkobos@gmail.com>", "Jounathaen <jounathaen at mail dot de>"]
 license = "MIT"
 description = "Frame buffer helper for embedded-graphics"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 embedded-graphics = "0.7"
