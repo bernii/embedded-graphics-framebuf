@@ -25,16 +25,16 @@
     <img src="https://raw.githubusercontent.com/embedded-graphics/embedded-graphics/191fe7f8a0fedc713f9722b9dc59208dacadee7e/assets/logo.svg?sanitize=true" alt="Embedded graphics logo" width="80" height="80">
   </a>
 
-<h3 align="center">Fraramebuffer implementation for Rust's Embedded-graphics</h3>
+<h3 align="center">Framebuffer implementation for Rust's Embedded-graphics</h3>
 
   <p align="center">
     Framebuffer approach helps to deal with display flickering when you update multiple parts of the display in separate operations. Intead, with this approach, you're going to write to a in-memory display and push it all at once into your hardware display when the whole picture is drawn.
     <br /><br />
-    This technique is useful when you're updating large portions of screen or just simply don't want to deal with partial display updates. 
+    This technique is useful when you're updating large portions of screen or just simply don't want to deal with partial display updates but comes at the cost of higher RAM usage.
     <br />
     <i>The approach has been tested on TTGO (esp32) with ST7789</i>
     <br />
-    <a href="https://github.com/bernii/embedded-graphics-framebuf"><strong>Explore the docs »</strong></a>
+    <a href="https://docs.rs/embedded-graphics-framebuf/latest/embedded_graphics_framebuf/index.html"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <a href="https://crates.io/crates/embedded-graphics-framebuf">Rust Crate</a>
@@ -103,7 +103,6 @@ Make sure you have your `rust` environment configurated
 1. Add library to your `Cargo.toml`
 
     ```toml
-    ...
     [dependencies]
     embedded-graphics-framebuf = "0.1.0"
     ```
@@ -120,8 +119,7 @@ Make sure you have your `rust` environment configurated
         240,
     );
 
-    static mut FBUFF: FrameBuf<Rgb565, 240_usize, 135_usize> = FrameBuf([[Rgb565::BLACK; 240]; 135]);
-    let fbuff = unsafe { &mut FBUFF };
+    let mut fbuff = FrameBuf<Rgb565, 240_usize, 135_usize> = FrameBuf([[Rgb565::BLACK; 240]; 135]);
 
     fbuff.clear_black();
     Text::new(
@@ -129,15 +127,9 @@ Make sure you have your `rust` environment configurated
         Point::new(10, 13),
         MonoTextStyle::new(&FONT_10X20, Rgb565::WHITE.into()),
     )
-    .draw(fbuff).unwrap();
+    .draw(&mut fbuff).unwrap();
 
-    // write to the actual display :-)
-    let u16_iter = fbuff
-        .into_iter()
-        .map(|px| px.into_storage());
-
-    // those are the offsets for my physical ST7789 display
-    display.set_pixels(40, 53, 240 - 1 + 40, 53 + 135, u16_iter);
+    display.draw_iter(fbuf.pixels()).unwrap();
     ```
 3. Your flickering problems should be solved at this point :)
 
