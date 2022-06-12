@@ -1,8 +1,11 @@
 [package]
 name = "embedded-graphics-framebuf"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-authors = ["Bernard Kobos <bkobos@gmail.com>", "Jounathaen <jounathaen at mail dot de>"]
+authors = [
+  "Bernard Kobos <bkobos@gmail.com>",
+  "Jounathaen <jounathaen at mail dot de>",
+]
 license = "MIT"
 description = "Frame buffer helper for embedded-graphics"
 
