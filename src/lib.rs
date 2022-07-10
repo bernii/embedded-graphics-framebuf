@@ -82,7 +82,7 @@ pub struct FrameBuf<'a, C: PixelColor> {
     pub height: usize,
 }
 
-impl<'a, C: PixelColor + Default> FrameBuf<'a, C> {
+impl<'a, C: PixelColor> FrameBuf<'a, C> {
     /// Create a new [`FrameBuf`] on top of an existing memory slice.
     ///
     /// # Panic
@@ -113,28 +113,6 @@ impl<'a, C: PixelColor + Default> FrameBuf<'a, C> {
         }
     }
 
-    /// Set all pixels to their [Default] value.
-    pub fn reset(&mut self) {
-        for y in 0..self.height {
-            for x in 0..self.width {
-                self[Point::new(x as i32, y as i32)] = C::default();
-            }
-        }
-    }
-}
-impl<'a, C: PixelColor + Sized> core::ops::Index<Point> for FrameBuf<'a, C> {
-    type Output = C;
-    fn index(&self, p: Point) -> &Self::Output {
-        &self.data[self.width * p.y as usize + p.x as usize]
-    }
-}
-impl<'a, C: PixelColor + Sized> core::ops::IndexMut<Point> for FrameBuf<'a, C> {
-    fn index_mut(&mut self, p: Point) -> &mut Self::Output {
-        &mut self.data[self.width * p.y as usize + p.x as usize]
-    }
-}
-
-impl<'a, C: PixelColor> FrameBuf<'a, C> {
     /// Creates an iterator over all [Pixels](Pixel) in the frame buffer. Can be
     /// used for rendering the framebuffer to the physical display.
     ///
@@ -165,6 +143,27 @@ impl<'a, C: PixelColor> FrameBuf<'a, C> {
         }
     }
 }
+impl<'a, C: PixelColor + Default> FrameBuf<'a, C> {
+    /// Set all pixels to their [Default] value.
+    pub fn reset(&mut self) {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                self[Point::new(x as i32, y as i32)] = C::default();
+            }
+        }
+    }
+}
+impl<'a, C: PixelColor + Sized> core::ops::Index<Point> for FrameBuf<'a, C> {
+    type Output = C;
+    fn index(&self, p: Point) -> &Self::Output {
+        &self.data[self.width * p.y as usize + p.x as usize]
+    }
+}
+impl<'a, C: PixelColor + Sized> core::ops::IndexMut<Point> for FrameBuf<'a, C> {
+    fn index_mut(&mut self, p: Point) -> &mut Self::Output {
+        &mut self.data[self.width * p.y as usize + p.x as usize]
+    }
+}
 
 impl<'a, C: PixelColor> IntoIterator for &'a FrameBuf<'a, C> {
     type Item = Pixel<C>;
@@ -172,27 +171,6 @@ impl<'a, C: PixelColor> IntoIterator for &'a FrameBuf<'a, C> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.pixels()
-    }
-}
-
-/// An iterator for all [Pixels](Pixel) in the framebuffer.
-pub struct PixelIterator<'a, C: PixelColor> {
-    fbuf: &'a FrameBuf<'a, C>,
-    index: usize,
-}
-
-impl<'a, C: PixelColor> Iterator for PixelIterator<'a, C> {
-    type Item = Pixel<C>;
-    fn next(&mut self) -> Option<Pixel<C>> {
-        let y = self.index / self.fbuf.width;
-        let x = self.index - y * self.fbuf.width;
-
-        if self.index >= self.fbuf.width * self.fbuf.height {
-            return None;
-        }
-        self.index += 1;
-        let p = Point::new(x as i32, y as i32);
-        Some(Pixel(p, self.fbuf[p]))
     }
 }
 
@@ -229,6 +207,27 @@ impl<'a, C: PixelColor> DrawTarget for FrameBuf<'a, C> {
             }
         }
         Ok(())
+    }
+}
+
+/// An iterator for all [Pixels](Pixel) in the framebuffer.
+pub struct PixelIterator<'a, C: PixelColor> {
+    fbuf: &'a FrameBuf<'a, C>,
+    index: usize,
+}
+
+impl<'a, C: PixelColor> Iterator for PixelIterator<'a, C> {
+    type Item = Pixel<C>;
+    fn next(&mut self) -> Option<Pixel<C>> {
+        let y = self.index / self.fbuf.width;
+        let x = self.index - y * self.fbuf.width;
+
+        if self.index >= self.fbuf.width * self.fbuf.height {
+            return None;
+        }
+        self.index += 1;
+        let p = Point::new(x as i32, y as i32);
+        Some(Pixel(p, self.fbuf[p]))
     }
 }
 
