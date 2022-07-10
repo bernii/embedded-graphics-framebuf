@@ -10,4 +10,5 @@ license = "MIT"
 description = "Frame buffer helper for embedded-graphics"
 
 [dependencies]
+embedded-dma = "0.2.0"
 embedded-graphics = "0.7"

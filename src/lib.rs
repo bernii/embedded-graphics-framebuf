@@ -39,6 +39,7 @@
 //! ```
 
 #![no_std]
+use embedded_dma::ReadBuffer;
 
 use embedded_graphics::{
     draw_target::DrawTarget,
@@ -228,6 +229,23 @@ impl<'a, C: PixelColor> DrawTarget for FrameBuf<'a, C> {
             }
         }
         Ok(())
+    }
+}
+
+/// # Safety:
+///
+/// The implementation of the trait for all lifetimes `'a` is safe. However, this doesn't mean that
+/// the use of [`read_buffer`](FrameBuf::read_buffer) is safe for all lifetimes. The call remains
+/// unsafe as long as the requirements specified in [`ReadBuffer::read_buffer`] aren't satisfied.
+unsafe impl<'a, C: PixelColor> ReadBuffer for FrameBuf<'a, C> {
+    type Word = u8;
+    unsafe fn read_buffer(&self) -> (*const Self::Word, usize) {
+        (
+            (self.data.as_ptr() as *const Self::Word),
+            self.height
+                * self.width
+                * (core::mem::size_of::<C>() / core::mem::size_of::<Self::Word>()),
+        )
     }
 }
 
