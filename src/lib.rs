@@ -48,6 +48,54 @@ use embedded_graphics::{
     Pixel,
 };
 
+/// A backend for a [`FrameBuf`]. In a basic scenario this is just some memory.
+/// But one could implement more elaborate backends which allow manipulation of
+/// the data on the fly.
+pub trait FrameBufferBackend {
+    type Color: PixelColor;
+    /// Sets a pixel to the respective color
+    fn set(&mut self, index: usize, color: Self::Color);
+
+    /// Returns a pixels color
+    fn get(&self, index: usize) -> Self::Color;
+
+    /// Nr of elements in the backend
+    fn nr_elements(&self) -> usize;
+}
+/// Trait for [`FrameBufferBackend`]s that can be used for DMA.
+///
+/// # Safety
+///
+/// The same restrictions as for [`embedded_dma::ReadBuffer`] apply.
+pub unsafe trait DMACapableFrameBufferBackend: FrameBufferBackend {
+    fn data_ptr(&self) -> *const Self::Color;
+}
+impl<'a, C: PixelColor, const N: usize> FrameBufferBackend for &'a mut [C; N] {
+    type Color = C;
+    fn set(&mut self, index: usize, color: C) {
+        self[index] = color
+    }
+
+    fn get(&self, index: usize) -> C {
+        self[index]
+    }
+
+    fn nr_elements(&self) -> usize {
+        self.len()
+    }
+}
+
+/// # Safety:
+///
+/// The implementation of the trait for all lifetimes `'a` is safe. However,
+/// this doesn't mean that the use of it is safe for all lifetimes. The
+/// requirements specified in [`ReadBuffer::read_buffer`] remain.
+unsafe impl<'a, C: PixelColor, const N: usize> DMACapableFrameBufferBackend for &'a mut [C; N] {
+    fn data_ptr(&self) -> *const C {
+        self.as_ptr()
+    }
+}
+
 /// Constructs a frame buffer in memory. Lets you define the width(`X`), height
 /// (`Y`) and pixel type your using in your display (RGB, Monochrome etc.)
 ///
@@ -76,13 +124,13 @@ use embedded_graphics::{
 /// ```
 // TODO: Once https://github.com/rust-lang/rust/issues/76560 is resolved, change this to `pub struct
 // FrameBuf<C: PixelColor, const X: usize, const Y: usize>(pub [C; X * Y]);`
-pub struct FrameBuf<'a, C: PixelColor> {
-    pub data: &'a mut [C],
-    pub width: usize,
-    pub height: usize,
+pub struct FrameBuf<C: PixelColor, B: FrameBufferBackend<Color = C>> {
+    pub data: B,
+    width: usize,
+    height: usize,
 }
 
-impl<'a, C: PixelColor> FrameBuf<'a, C> {
+impl<C: PixelColor, B: FrameBufferBackend<Color = C>> FrameBuf<C, B> {
     /// Create a new [`FrameBuf`] on top of an existing memory slice.
     ///
     /// # Panic
@@ -96,15 +144,15 @@ impl<'a, C: PixelColor> FrameBuf<'a, C> {
     /// let mut data = [Rgb565::BLACK; 240 * 135];
     /// let mut fbuff = FrameBuf::new(&mut data, 240, 135);
     /// ```
-    pub fn new(data: &'a mut [C], width: usize, height: usize) -> Self {
+    pub fn new(data: B, width: usize, height: usize) -> Self {
         assert_eq!(
-            data.len(),
+            data.nr_elements(),
             width * height,
             "FrameBuf underlying data size does not match width ({}) * height ({}) = {} but is {}",
             width,
             height,
             width * height,
-            data.len()
+            data.nr_elements(),
         );
         Self {
             data,
@@ -112,32 +160,40 @@ impl<'a, C: PixelColor> FrameBuf<'a, C> {
             height,
         }
     }
+
+    /// Get the framebuffers width.
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    /// Get the framebuffers height.
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    fn point_to_index(&self, p: Point) -> usize {
+        self.width * p.y as usize + p.x as usize
+    }
+
+    /// Set a pixel's color.
+    pub fn set_color_at(&mut self, p: Point, color: C) {
+        self.data.set(self.point_to_index(p), color)
+    }
+
+    /// Get a pixel's color.
+    pub fn get_color_at(&self, p: Point) -> C {
+        self.data.get(self.point_to_index(p))
+    }
 }
-impl<'a, C: PixelColor + Default> FrameBuf<'a, C> {
-    /// Set all pixels to their [Default] value.
+impl<C: PixelColor + Default, B: FrameBufferBackend<Color = C>> FrameBuf<C, B> {
     pub fn reset(&mut self) {
-        for y in 0..self.height {
-            for x in 0..self.width {
-                self[Point::new(x as i32, y as i32)] = C::default();
-            }
-        }
-    }
-}
-impl<'a, C: PixelColor + Sized> core::ops::Index<Point> for FrameBuf<'a, C> {
-    type Output = C;
-    fn index(&self, p: Point) -> &Self::Output {
-        &self.data[self.width * p.y as usize + p.x as usize]
-    }
-}
-impl<'a, C: PixelColor + Sized> core::ops::IndexMut<Point> for FrameBuf<'a, C> {
-    fn index_mut(&mut self, p: Point) -> &mut Self::Output {
-        &mut self.data[self.width * p.y as usize + p.x as usize]
+        self.clear(C::default()).unwrap();
     }
 }
 
-impl<'a, C: PixelColor> IntoIterator for &'a FrameBuf<'a, C> {
+impl<'a, C: PixelColor, B: FrameBufferBackend<Color = C>> IntoIterator for &'a FrameBuf<C, B> {
     type Item = Pixel<C>;
-    type IntoIter = PixelIterator<'a, C>;
+    type IntoIter = PixelIterator<'a, C, B>;
 
     /// Creates an iterator over all [Pixels](Pixel) in the frame buffer. Can be
     /// used for rendering the framebuffer to the physical display.
@@ -170,13 +226,13 @@ impl<'a, C: PixelColor> IntoIterator for &'a FrameBuf<'a, C> {
     }
 }
 
-impl<'a, C: PixelColor> OriginDimensions for FrameBuf<'a, C> {
+impl<C: PixelColor, B: FrameBufferBackend<Color = C>> OriginDimensions for FrameBuf<C, B> {
     fn size(&self) -> Size {
         Size::new(self.width as u32, self.height as u32)
     }
 }
 
-impl<'a, C: PixelColor> DrawTarget for FrameBuf<'a, C> {
+impl<C: PixelColor, B: FrameBufferBackend<Color = C>> DrawTarget for FrameBuf<C, B> {
     type Color = C;
     type Error = core::convert::Infallible;
 
@@ -190,7 +246,7 @@ impl<'a, C: PixelColor> DrawTarget for FrameBuf<'a, C> {
                 && coord.y >= 0
                 && coord.y < self.height as i32
             {
-                self[coord] = color;
+                self.set_color_at(coord, color);
             }
         }
         Ok(())
@@ -199,7 +255,7 @@ impl<'a, C: PixelColor> DrawTarget for FrameBuf<'a, C> {
     fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error> {
         for y in 0..self.height {
             for x in 0..self.width {
-                self[Point::new(x as i32, y as i32)] = color;
+                self.set_color_at(Point::new(x as i32, y as i32), color);
             }
         }
         Ok(())
@@ -207,12 +263,12 @@ impl<'a, C: PixelColor> DrawTarget for FrameBuf<'a, C> {
 }
 
 /// An iterator for all [Pixels](Pixel) in the framebuffer.
-pub struct PixelIterator<'a, C: PixelColor> {
-    fbuf: &'a FrameBuf<'a, C>,
+pub struct PixelIterator<'a, C: PixelColor, B: FrameBufferBackend<Color = C>> {
+    fbuf: &'a FrameBuf<C, B>,
     index: usize,
 }
 
-impl<'a, C: PixelColor> Iterator for PixelIterator<'a, C> {
+impl<'a, C: PixelColor, B: FrameBufferBackend<Color = C>> Iterator for PixelIterator<'a, C, B> {
     type Item = Pixel<C>;
     fn next(&mut self) -> Option<Pixel<C>> {
         let y = self.index / self.fbuf.width;
@@ -223,20 +279,17 @@ impl<'a, C: PixelColor> Iterator for PixelIterator<'a, C> {
         }
         self.index += 1;
         let p = Point::new(x as i32, y as i32);
-        Some(Pixel(p, self.fbuf[p]))
+        Some(Pixel(p, self.fbuf.get_color_at(p)))
     }
 }
 
-/// # Safety:
-///
-/// The implementation of the trait for all lifetimes `'a` is safe. However, this doesn't mean that
-/// the use of [`read_buffer`](FrameBuf::read_buffer) is safe for all lifetimes. The call remains
-/// unsafe as long as the requirements specified in [`ReadBuffer::read_buffer`] aren't satisfied.
-unsafe impl<'a, C: PixelColor> ReadBuffer for FrameBuf<'a, C> {
+unsafe impl<C: PixelColor, B: DMACapableFrameBufferBackend<Color = C>> ReadBuffer
+    for FrameBuf<C, B>
+{
     type Word = u8;
     unsafe fn read_buffer(&self) -> (*const Self::Word, usize) {
         (
-            (self.data.as_ptr() as *const Self::Word),
+            (self.data.data_ptr() as *const Self::Word),
             self.height
                 * self.width
                 * (core::mem::size_of::<C>() / core::mem::size_of::<Self::Word>()),
@@ -262,18 +315,20 @@ mod tests {
 
     use super::*;
 
-    fn get_px_nums<'a, C: PixelColor>(fbuf: &FrameBuf<C>) -> HashMap<C, i32>
+    fn get_px_nums<C: PixelColor, B: FrameBufferBackend<Color = C>>(
+        fbuf: &FrameBuf<C, B>,
+    ) -> HashMap<C, i32>
     where
         C: Hash,
         C: std::cmp::Eq,
     {
         let mut px_nums: HashMap<C, i32> = HashMap::new();
-        for px in fbuf.data.iter() {
+        for px in fbuf.into_iter() {
             //for px in col {
-            match px_nums.get_mut(px) {
+            match px_nums.get_mut(&px.1) {
                 Some(v) => *v += 1,
                 None => {
-                    px_nums.insert(*px, 1);
+                    px_nums.insert(px.1, 1);
                 }
             };
             //}
@@ -361,7 +416,7 @@ mod tests {
     fn raw_data() {
         let mut data = [Rgb565::new(1, 2, 3); 3 * 3];
         let mut fbuf = FrameBuf::new(&mut data, 3, 3);
-        fbuf[Point { x: 1, y: 0 }] = Rgb565::new(3, 2, 1);
+        fbuf.set_color_at(Point { x: 1, y: 0 }, Rgb565::new(3, 2, 1));
         let mut raw_iter = fbuf.data.iter();
         assert_eq!(*raw_iter.next().unwrap(), Rgb565::new(1, 2, 3));
         assert_eq!(*raw_iter.next().unwrap(), Rgb565::new(3, 2, 1));
