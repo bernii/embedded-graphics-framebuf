@@ -35,7 +35,7 @@
 //!     .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 2))
 //!     .draw(&mut fbuf)
 //!     .unwrap();
-//! display.draw_iter(fbuf.pixels()).unwrap();
+//! display.draw_iter(fbuf.into_iter()).unwrap();
 //! ```
 
 #![no_std]
@@ -112,36 +112,6 @@ impl<'a, C: PixelColor> FrameBuf<'a, C> {
             height,
         }
     }
-
-    /// Creates an iterator over all [Pixels](Pixel) in the frame buffer. Can be
-    /// used for rendering the framebuffer to the physical display.
-    ///
-    /// # Example
-    /// ```rust
-    /// use embedded_graphics::{
-    ///     draw_target::DrawTarget,
-    ///     mock_display::MockDisplay,
-    ///     pixelcolor::BinaryColor,
-    ///     prelude::{Point, Primitive},
-    ///     primitives::{Line, PrimitiveStyle},
-    ///     Drawable,
-    /// };
-    /// use embedded_graphics_framebuf::FrameBuf;
-    /// let mut data = [BinaryColor::Off; 12 * 11];
-    /// let mut fbuf = FrameBuf::new(&mut data, 12, 11);
-    /// let mut display: MockDisplay<BinaryColor> = MockDisplay::new();
-    /// Line::new(Point::new(2, 2), Point::new(10, 2))
-    ///     .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 2))
-    ///     .draw(&mut fbuf)
-    ///     .unwrap();
-    /// display.draw_iter(fbuf.pixels()).unwrap();
-    /// ```
-    pub fn pixels(&self) -> PixelIterator<C> {
-        PixelIterator {
-            fbuf: self,
-            index: 0,
-        }
-    }
 }
 impl<'a, C: PixelColor + Default> FrameBuf<'a, C> {
     /// Set all pixels to their [Default] value.
@@ -169,8 +139,34 @@ impl<'a, C: PixelColor> IntoIterator for &'a FrameBuf<'a, C> {
     type Item = Pixel<C>;
     type IntoIter = PixelIterator<'a, C>;
 
+    /// Creates an iterator over all [Pixels](Pixel) in the frame buffer. Can be
+    /// used for rendering the framebuffer to the physical display.
+    ///
+    /// # Example
+    /// ```rust
+    /// use embedded_graphics::{
+    ///     draw_target::DrawTarget,
+    ///     mock_display::MockDisplay,
+    ///     pixelcolor::BinaryColor,
+    ///     prelude::{Point, Primitive},
+    ///     primitives::{Line, PrimitiveStyle},
+    ///     Drawable,
+    /// };
+    /// use embedded_graphics_framebuf::FrameBuf;
+    /// let mut data = [BinaryColor::Off; 12 * 11];
+    /// let mut fbuf = FrameBuf::new(&mut data, 12, 11);
+    /// let mut display: MockDisplay<BinaryColor> = MockDisplay::new();
+    /// Line::new(Point::new(2, 2), Point::new(10, 2))
+    ///     .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 2))
+    ///     .draw(&mut fbuf)
+    ///     .unwrap();
+    /// display.draw_iter(fbuf.into_iter()).unwrap();
+    /// ```
     fn into_iter(self) -> Self::IntoIter {
-        self.pixels()
+        PixelIterator {
+            fbuf: self,
+            index: 0,
+        }
     }
 }
 
@@ -327,7 +323,7 @@ mod tests {
             .draw(&mut fbuf)
             .unwrap();
 
-        display.draw_iter(fbuf.pixels()).unwrap();
+        display.draw_iter(fbuf.into_iter()).unwrap();
         display.assert_pattern(&[
             "............",
             "..#########.",
