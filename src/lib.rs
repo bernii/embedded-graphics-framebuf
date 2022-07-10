@@ -40,7 +40,6 @@
 
 #![no_std]
 use embedded_dma::ReadBuffer;
-
 use embedded_graphics::{
     draw_target::DrawTarget,
     geometry::OriginDimensions,
@@ -48,53 +47,8 @@ use embedded_graphics::{
     Pixel,
 };
 
-/// A backend for a [`FrameBuf`]. In a basic scenario this is just some memory.
-/// But one could implement more elaborate backends which allow manipulation of
-/// the data on the fly.
-pub trait FrameBufferBackend {
-    type Color: PixelColor;
-    /// Sets a pixel to the respective color
-    fn set(&mut self, index: usize, color: Self::Color);
-
-    /// Returns a pixels color
-    fn get(&self, index: usize) -> Self::Color;
-
-    /// Nr of elements in the backend
-    fn nr_elements(&self) -> usize;
-}
-/// Trait for [`FrameBufferBackend`]s that can be used for DMA.
-///
-/// # Safety
-///
-/// The same restrictions as for [`embedded_dma::ReadBuffer`] apply.
-pub unsafe trait DMACapableFrameBufferBackend: FrameBufferBackend {
-    fn data_ptr(&self) -> *const Self::Color;
-}
-impl<'a, C: PixelColor, const N: usize> FrameBufferBackend for &'a mut [C; N] {
-    type Color = C;
-    fn set(&mut self, index: usize, color: C) {
-        self[index] = color
-    }
-
-    fn get(&self, index: usize) -> C {
-        self[index]
-    }
-
-    fn nr_elements(&self) -> usize {
-        self.len()
-    }
-}
-
-/// # Safety:
-///
-/// The implementation of the trait for all lifetimes `'a` is safe. However,
-/// this doesn't mean that the use of it is safe for all lifetimes. The
-/// requirements specified in [`ReadBuffer::read_buffer`] remain.
-unsafe impl<'a, C: PixelColor, const N: usize> DMACapableFrameBufferBackend for &'a mut [C; N] {
-    fn data_ptr(&self) -> *const C {
-        self.as_ptr()
-    }
-}
+pub mod backends;
+use backends::{DMACapableFrameBufferBackend, FrameBufferBackend};
 
 /// Constructs a frame buffer in memory. Lets you define the width(`X`), height
 /// (`Y`) and pixel type your using in your display (RGB, Monochrome etc.)
