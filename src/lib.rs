@@ -17,10 +17,9 @@
 use embedded_graphics::{
     draw_target::DrawTarget,
     geometry::OriginDimensions,
-    prelude::{PixelColor, Size},
+    prelude::{PixelColor, Size, Point},
     Pixel,
 };
-use std::convert::TryInto;
 
 /// Constructs frame buffer in memory. Lets you define the size (width & height)
 /// and pixel type your using in your display (RGB, Monochrome etc.)
@@ -122,8 +121,8 @@ impl<C: PixelColor, const X: usize, const Y: usize> DrawTarget for &mut FrameBuf
         I: IntoIterator<Item = Pixel<Self::Color>>,
     {
         for Pixel(coord, color) in pixels.into_iter() {
-            if let Ok(pos) = coord.try_into() {
-                let (x, y): (u32, u32) = pos;
+            if coord.x >= 0 && coord.x < X as i32 && coord.y >= 0 && coord.y < Y as i32 {
+                let Point { x, y } = coord;
                 self.0[y as usize][x as usize] = color;
             }
         }
