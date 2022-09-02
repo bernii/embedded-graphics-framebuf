@@ -104,7 +104,7 @@ Make sure you have your `rust` environment configurated
 
     ```toml
     [dependencies]
-    embedded-graphics-framebuf = "0.1.0"
+    embedded-graphics-framebuf = "0.2.0"
     ```
 2. Use the library in you code
     ```rust
@@ -163,6 +163,8 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ## Contact
 
 Bernard Kobos - [@bkobos](https://twitter.com/bkobos) - bkobos@gmail.com
+
+Jounathaen - jounathaen at mail dot de
 
 Project Link: [https://github.com/bernii/embedded-graphics-framebuf](https://github.com/bernii/embedded-graphics-framebuf)
 
