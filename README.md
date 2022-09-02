@@ -109,27 +109,21 @@ Make sure you have your `rust` environment configurated
 2. Use the library in you code
     ```rust
     use embedded_graphics_framebuf::FrameBuf;
-    ...
 
-    let mut display = st7789::ST7789::new(
-        di,
-        rst.into_output()?,
-        // SP7789V is designed to drive 240x320 screens, even though the TTGO physical screen is smaller
-        320,
-        240,
-    );
+    // ...
 
-    let mut fbuff = FrameBuf<Rgb565, 240_usize, 135_usize> = FrameBuf([[Rgb565::BLACK; 240]; 135]);
+    // Backend for the buffer
+    let mut data = [BinaryColor::Off; 12 * 11];
+    let mut fbuf = FrameBuf::new(&mut data, 12, 11);
 
-    fbuff.clear_black();
-    Text::new(
-        &"Good luck!",
-        Point::new(10, 13),
-        MonoTextStyle::new(&FONT_10X20, Rgb565::WHITE.into()),
-    )
-    .draw(&mut fbuff).unwrap();
-
-    display.draw_iter(fbuf.pixels()).unwrap();
+    // You would use a "real" display here...
+    let mut display: MockDisplay<BinaryColor> = MockDisplay::new();
+    Line::new(Point::new(2, 2), Point::new(10, 2))
+        .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 2))
+        .draw(&mut fbuf)
+        .unwrap();
+    // Write it all to the display
+    display.draw_iter(fbuf.into_iter()).unwrap();
     ```
 3. Your flickering problems should be solved at this point :)
 
