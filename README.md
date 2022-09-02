@@ -25,16 +25,9 @@
     <img src="https://raw.githubusercontent.com/embedded-graphics/embedded-graphics/191fe7f8a0fedc713f9722b9dc59208dacadee7e/assets/logo.svg?sanitize=true" alt="Embedded graphics logo" width="80" height="80">
   </a>
 
-<h3 align="center">Framebuffer implementation for Rust's Embedded-graphics</h3>
-
+<h2 align="center">Framebuffer implementation for Rust's Embedded-graphics</h3>
   <p align="center">
-    Framebuffer approach helps to deal with display flickering when you update multiple parts of the display in separate operations. Intead, with this approach, you're going to write to a in-memory display and push it all at once into your hardware display when the whole picture is drawn.
-    <br /><br />
-    This technique is useful when you're updating large portions of screen or just simply don't want to deal with partial display updates but comes at the cost of higher RAM usage and more traffic to the displays.
-    <br />
-    <i>The approach has been tested on TTGO (esp32) with ST7789</i>
-    <br />
-    <a href="https://docs.rs/embedded-graphics-framebuf/latest/embedded_graphics_framebuf/index.html"><strong>Explore the docs »</strong></a>
+    <a href="https://docs.rs/embedded-graphics-framebuf/latest/embedded_graphics_framebuf/index.html"><strong>Documentation</strong></a>
     <br />
     <br />
     <a href="https://crates.io/crates/embedded-graphics-framebuf">Rust Crate</a>
@@ -53,9 +46,6 @@
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
     </li>
     <li>
       <a href="#getting-started">Getting Started</a>
@@ -76,18 +66,12 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-This library is a Rust implementation of framebuffer approach that is often used when driving hardware displays. The goal is to perform bulk-write of all the screen pixels at once, avoiding multiple individual updates that could lead to screen flickering. Of course, this leads to more data traffic to the display, as also the pixels which didn't change are updated.
+This [Rust](https://www.rust-lang.org/) library is an implementation of the framebuffer approach for the [embedded-graphics](https://github.com/embedded-graphics/embedded-graphics) ecosystem. The goal is to perform bulk-write of all the screen pixels at once, instead of having multiple individual updates for separate primitives.
 
-This library has been designed to work with Rust's embedded-graphics library.
+Graphic compositing in multiple operations with direct updates on a display can lead to flickering and clearing previous content on the screen is harder. A Framebuffer helps to deal with this by drawing on an in-memory display, so the final display image can be pushed all at once to your hardware display.
 
-<p align="right">(<a href="#top">back to top</a>)</p>
+This technique is useful when you're updating large portions of screen or just simply don't want to deal with partial display updates but comes at the cost of higher RAM usage and more traffic to the displays. This crate also has DMA support, which can enhance the performance of larger display updates.
 
-
-
-### Built With
-
-* [rust](https://www.rust-lang.org/)
-* [embedded-graphics](https://github.com/embedded-graphics/embedded-graphics)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
