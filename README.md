@@ -30,7 +30,7 @@
   <p align="center">
     Framebuffer approach helps to deal with display flickering when you update multiple parts of the display in separate operations. Intead, with this approach, you're going to write to a in-memory display and push it all at once into your hardware display when the whole picture is drawn.
     <br /><br />
-    This technique is useful when you're updating large portions of screen or just simply don't want to deal with partial display updates but comes at the cost of higher RAM usage.
+    This technique is useful when you're updating large portions of screen or just simply don't want to deal with partial display updates but comes at the cost of higher RAM usage and more traffic to the displays.
     <br />
     <i>The approach has been tested on TTGO (esp32) with ST7789</i>
     <br />
@@ -76,7 +76,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-This library is a Rust implementation of framebuffer approach that is often used when driving hardware displays. The goal is to perform bulk-write of all the screen pixels at once, avoiding multiple individual updates that could lead to screen flickering.
+This library is a Rust implementation of framebuffer approach that is often used when driving hardware displays. The goal is to perform bulk-write of all the screen pixels at once, avoiding multiple individual updates that could lead to screen flickering. Of course, this leads to more data traffic to the display, as also the pixels which didn't change are updated.
 
 This library has been designed to work with Rust's embedded-graphics library.
 
