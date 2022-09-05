@@ -17,8 +17,6 @@
 [![LinkedIn][linkedin-shield]][linkedin-url]
 
 
-
-<!-- PROJECT LOGO -->
 <br />
 <div align="center">
   <a href="https://github.com/bernii/embedded-graphics-framebuf">
@@ -39,31 +37,6 @@
 </div>
 
 
-
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
-
-
-
-<!-- ABOUT THE PROJECT -->
 ## About The Project
 
 This [Rust](https://www.rust-lang.org/) library is an implementation of the framebuffer approach for the [embedded-graphics](https://github.com/embedded-graphics/embedded-graphics) ecosystem. The goal is to perform bulk-write of all the screen pixels at once, instead of having multiple individual updates for separate primitives.
@@ -73,11 +46,6 @@ Graphic compositing in multiple operations with direct updates on a display can 
 This technique is useful when you're updating large portions of screen or just simply don't want to deal with partial display updates but comes at the cost of higher RAM usage and more traffic to the displays. This crate also has DMA support, which can enhance the performance of larger display updates.
 
 
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
-
-<!-- GETTING STARTED -->
 ## Getting Started
 
 Make sure you have your `rust` environment configurated
@@ -111,10 +79,7 @@ Make sure you have your `rust` environment configurated
     ```
 3. Your flickering problems should be solved at this point :)
 
-<p align="right">(<a href="#top">back to top</a>)</p>
 
-
-<!-- ROADMAP -->
 ## Roadmap
 
 - [x] add tests
@@ -124,20 +89,12 @@ Make sure you have your `rust` environment configurated
 
 See the [open issues](https://github.com/bernii/embedded-graphics-framebuf/issues) for a full list of proposed features (and known issues).
 
-<p align="right">(<a href="#top">back to top</a>)</p>
 
-
-
-<!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
-<p align="right">(<a href="#top">back to top</a>)</p>
 
-
-
-<!-- CONTACT -->
 ## Contact
 
 Bernard Kobos - [@bkobos](https://twitter.com/bkobos) - bkobos@gmail.com
@@ -146,19 +103,11 @@ Jounathaen - jounathaen at mail dot de
 
 Project Link: [https://github.com/bernii/embedded-graphics-framebuf](https://github.com/bernii/embedded-graphics-framebuf)
 
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
-
-<!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
 * proven examlpes from [adamgreid](https://github.com/adamgreig) ([imlplementation](https://github.com/adamgreig/walkclock-public/blob/master/firmware/src/framebuf.rs ))
 * [st7789](https://github.com/almindor/st7789) driver by almindor
 * super helpful [embedded-graphics](https://app.element.io/#/room/#rust-embedded-graphics:matrix.org) matrix chat
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
