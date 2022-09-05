@@ -28,11 +28,11 @@
     <a href="https://docs.rs/embedded-graphics-framebuf/latest/embedded_graphics_framebuf/index.html"><strong>Documentation</strong></a>
     <br />
     <br />
-    <a href="https://crates.io/crates/embedded-graphics-framebuf">Rust Crate</a>
+    <a href="https://crates.io/crates/embedded-graphics-framebuf">Crates.io</a>
     ·
-    <a href="https://github.com/bernii/embedded-graphics-framebuf/issues">Report Bug</a>
+    <a href="https://github.com/bernii/embedded-graphics-framebuf/issues">Report a Bug</a>
     ·
-    <a href="https://github.com/bernii/embedded-graphics-framebuf/issues">Request Feature</a>
+    <a href="https://github.com/bernii/embedded-graphics-framebuf/issues">Feature Request</a>
   </p>
 </div>
 
