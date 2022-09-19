@@ -17,83 +17,35 @@
 [![LinkedIn][linkedin-shield]][linkedin-url]
 
 
-
-<!-- PROJECT LOGO -->
 <br />
 <div align="center">
   <a href="https://github.com/bernii/embedded-graphics-framebuf">
     <img src="https://raw.githubusercontent.com/embedded-graphics/embedded-graphics/191fe7f8a0fedc713f9722b9dc59208dacadee7e/assets/logo.svg?sanitize=true" alt="Embedded graphics logo" width="80" height="80">
   </a>
 
-<h3 align="center">Framebuffer implementation for Rust's Embedded-graphics</h3>
-
+<h2 align="center">Framebuffer implementation for Rust's Embedded-graphics</h3>
   <p align="center">
-    Framebuffer approach helps to deal with display flickering when you update multiple parts of the display in separate operations. Intead, with this approach, you're going to write to a in-memory display and push it all at once into your hardware display when the whole picture is drawn.
-    <br /><br />
-    This technique is useful when you're updating large portions of screen or just simply don't want to deal with partial display updates but comes at the cost of higher RAM usage.
-    <br />
-    <i>The approach has been tested on TTGO (esp32) with ST7789</i>
-    <br />
-    <a href="https://docs.rs/embedded-graphics-framebuf/latest/embedded_graphics_framebuf/index.html"><strong>Explore the docs »</strong></a>
+    <a href="https://docs.rs/embedded-graphics-framebuf/latest/embedded_graphics_framebuf/index.html"><strong>Documentation</strong></a>
     <br />
     <br />
-    <a href="https://crates.io/crates/embedded-graphics-framebuf">Rust Crate</a>
+    <a href="https://crates.io/crates/embedded-graphics-framebuf">Crates.io</a>
     ·
-    <a href="https://github.com/bernii/embedded-graphics-framebuf/issues">Report Bug</a>
+    <a href="https://github.com/bernii/embedded-graphics-framebuf/issues">Report a Bug</a>
     ·
-    <a href="https://github.com/bernii/embedded-graphics-framebuf/issues">Request Feature</a>
+    <a href="https://github.com/bernii/embedded-graphics-framebuf/issues">Feature Request</a>
   </p>
 </div>
 
 
-
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
-
-
-
-<!-- ABOUT THE PROJECT -->
 ## About The Project
 
-This library is a Rust implementation of framebuffer approach that is often used when driving hardware displays. The goal is to perform bulk-write of all the screen pixels at once, avoiding multiple individual updates that could lead to screen flickering.
+This [Rust](https://www.rust-lang.org/) library is an implementation of the framebuffer approach for the [embedded-graphics](https://github.com/embedded-graphics/embedded-graphics) ecosystem. The goal is to perform bulk-write of all the screen pixels at once, instead of having multiple individual updates for separate primitives.
 
-This library has been designed to work with Rust's embedded-graphics library.
+Graphic compositing in multiple operations with direct updates on a display can lead to flickering and clearing previous content on the screen is harder. A Framebuffer helps to deal with this by drawing on an in-memory display, so the final display image can be pushed all at once to your hardware display.
 
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
-
-### Built With
-
-* [rust](https://www.rust-lang.org/)
-* [embedded-graphics](https://github.com/embedded-graphics/embedded-graphics)
-
-<p align="right">(<a href="#top">back to top</a>)</p>
+This technique is useful when you're updating large portions of screen or just simply don't want to deal with partial display updates but comes at the cost of higher RAM usage and more traffic to the displays. This crate also has DMA support, which can enhance the performance of larger display updates.
 
 
-
-<!-- GETTING STARTED -->
 ## Getting Started
 
 Make sure you have your `rust` environment configurated
@@ -109,34 +61,25 @@ Make sure you have your `rust` environment configurated
 2. Use the library in you code
     ```rust
     use embedded_graphics_framebuf::FrameBuf;
-    ...
 
-    let mut display = st7789::ST7789::new(
-        di,
-        rst.into_output()?,
-        // SP7789V is designed to drive 240x320 screens, even though the TTGO physical screen is smaller
-        320,
-        240,
-    );
+    // ...
 
-    let mut fbuff = FrameBuf<Rgb565, 240_usize, 135_usize> = FrameBuf([[Rgb565::BLACK; 240]; 135]);
+    // Backend for the buffer
+    let mut data = [BinaryColor::Off; 12 * 11];
+    let mut fbuf = FrameBuf::new(&mut data, 12, 11);
 
-    fbuff.clear_black();
-    Text::new(
-        &"Good luck!",
-        Point::new(10, 13),
-        MonoTextStyle::new(&FONT_10X20, Rgb565::WHITE.into()),
-    )
-    .draw(&mut fbuff).unwrap();
-
-    display.draw_iter(fbuf.pixels()).unwrap();
+    // You would use a "real" display here...
+    let mut display: MockDisplay<BinaryColor> = MockDisplay::new();
+    Line::new(Point::new(2, 2), Point::new(10, 2))
+        .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 2))
+        .draw(&mut fbuf)
+        .unwrap();
+    // Write it all to the display
+    display.draw_iter(fbuf.into_iter()).unwrap();
     ```
 3. Your flickering problems should be solved at this point :)
 
-<p align="right">(<a href="#top">back to top</a>)</p>
 
-
-<!-- ROADMAP -->
 ## Roadmap
 
 - [x] add tests
@@ -146,20 +89,12 @@ Make sure you have your `rust` environment configurated
 
 See the [open issues](https://github.com/bernii/embedded-graphics-framebuf/issues) for a full list of proposed features (and known issues).
 
-<p align="right">(<a href="#top">back to top</a>)</p>
 
-
-
-<!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
-<p align="right">(<a href="#top">back to top</a>)</p>
 
-
-
-<!-- CONTACT -->
 ## Contact
 
 Bernard Kobos - [@bkobos](https://twitter.com/bkobos) - bkobos@gmail.com
@@ -168,19 +103,11 @@ Jounathaen - jounathaen at mail dot de
 
 Project Link: [https://github.com/bernii/embedded-graphics-framebuf](https://github.com/bernii/embedded-graphics-framebuf)
 
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
-
-<!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
 * proven examlpes from [adamgreid](https://github.com/adamgreig) ([imlplementation](https://github.com/adamgreig/walkclock-public/blob/master/firmware/src/framebuf.rs ))
 * [st7789](https://github.com/almindor/st7789) driver by almindor
 * super helpful [embedded-graphics](https://app.element.io/#/room/#rust-embedded-graphics:matrix.org) matrix chat
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
