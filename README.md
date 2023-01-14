@@ -75,7 +75,8 @@ Make sure you have your `rust` environment configurated
         .draw(&mut fbuf)
         .unwrap();
     // Write it all to the display
-    display.draw_iter(fbuf.into_iter()).unwrap();
+    let area = Rectangle::new(Point::new(0, 0), fbuf.size());
+    display.fill_contiguous(&area, data).unwrap();
     ```
 3. Your flickering problems should be solved at this point :)
 
