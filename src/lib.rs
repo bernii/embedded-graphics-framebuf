@@ -35,7 +35,8 @@
 //!     .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 2))
 //!     .draw(&mut fbuf)
 //!     .unwrap();
-//! display.draw_iter(fbuf.into_iter()).unwrap();
+//! let area = Rectangle::new(Point::new(0, 0), fbuf.size());
+//! display.fill_contiguous(&area, data).unwrap();
 //! ```
 
 #![no_std]
