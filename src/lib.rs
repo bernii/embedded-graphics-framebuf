@@ -23,7 +23,7 @@
 //!     mock_display::MockDisplay,
 //!     pixelcolor::BinaryColor,
 //!     prelude::{Point, Primitive},
-//!     primitives::{Line, PrimitiveStyle},
+//!     primitives::{Line, PrimitiveStyle, Rectangle},
 //!     Drawable,
 //! };
 //! use embedded_graphics_framebuf::FrameBuf;
@@ -126,6 +126,11 @@ impl<C: PixelColor, B: FrameBufferBackend<Color = C>> FrameBuf<C, B> {
         self.height
     }
 
+    /// Get the framebuffers size.
+    pub fn size(&self) -> Size {
+        Size::new(self.width as u32, self.height as u32)
+    }
+
     fn point_to_index(&self, p: Point) -> usize {
         self.width * p.y as usize + p.x as usize
     }
@@ -183,7 +188,7 @@ impl<'a, C: PixelColor, B: FrameBufferBackend<Color = C>> IntoIterator for &'a F
 
 impl<C: PixelColor, B: FrameBufferBackend<Color = C>> OriginDimensions for FrameBuf<C, B> {
     fn size(&self) -> Size {
-        Size::new(self.width as u32, self.height as u32)
+        self.size()
     }
 }
 
