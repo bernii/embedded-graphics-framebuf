@@ -56,7 +56,7 @@ Make sure you have your `rust` environment configurated
 
     ```toml
     [dependencies]
-    embedded-graphics-framebuf = "0.2.0"
+    embedded-graphics-framebuf = "0.3.0"
     ```
 2. Use the library in you code
     ```rust
