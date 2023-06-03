@@ -10,8 +10,13 @@
 //!     backends::{EndianCorrectedBuffer, EndianCorrection},
 //!     FrameBuf,
 //! };
-//! let mut data = [Rgb565::BLACK; 12 * 11]; // A potential backend
+//!
+//! // A potential backend
+//! let mut data = [Rgb565::BLACK; 12 * 11];
 //! let mut fbuf = FrameBuf::new(&mut data, 12, 11);
+//!
+//! // Another potential backend that is owned by the framebuffer
+//! let mut fbuf = FrameBuf::new([Rgb565::BLACK; 12 * 11], 12, 11);
 //!
 //! let mut fbuf = FrameBuf::new(
 //!     EndianCorrectedBuffer::new(&mut data, EndianCorrection::ToBigEndian),
@@ -40,14 +45,6 @@ pub trait FrameBufferBackend {
     fn nr_elements(&self) -> usize;
 }
 
-/// Backends implementing this Trait can be used for DMA.
-///
-/// # Safety
-///
-/// The same restrictions as for [`embedded_dma::ReadBuffer`] apply.
-pub unsafe trait DMACapableFrameBufferBackend: FrameBufferBackend {
-    fn data_ptr(&self) -> *const Self::Color;
-}
 impl<'a, C: PixelColor, const N: usize> FrameBufferBackend for &'a mut [C; N] {
     type Color = C;
     fn set(&mut self, index: usize, color: C) {
@@ -61,6 +58,30 @@ impl<'a, C: PixelColor, const N: usize> FrameBufferBackend for &'a mut [C; N] {
     fn nr_elements(&self) -> usize {
         self.len()
     }
+}
+
+impl<C: PixelColor, const N: usize> FrameBufferBackend for [C; N] {
+    type Color = C;
+    fn set(&mut self, index: usize, color: C) {
+        self[index] = color
+    }
+
+    fn get(&self, index: usize) -> C {
+        self[index]
+    }
+
+    fn nr_elements(&self) -> usize {
+        self.len()
+    }
+}
+
+/// Backends implementing this Trait can be used for DMA.
+///
+/// # Safety
+///
+/// The same restrictions as for [`embedded_dma::ReadBuffer`] apply.
+pub unsafe trait DMACapableFrameBufferBackend: FrameBufferBackend {
+    fn data_ptr(&self) -> *const Self::Color;
 }
 
 /// # Safety:
