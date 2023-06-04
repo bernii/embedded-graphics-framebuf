@@ -83,6 +83,7 @@ pub struct FrameBuf<C: PixelColor, B: FrameBufferBackend<Color = C>> {
     pub data: B,
     width: usize,
     height: usize,
+    origin: Point,
 }
 
 impl<C: PixelColor, B: FrameBufferBackend<Color = C>> FrameBuf<C, B> {
@@ -100,6 +101,24 @@ impl<C: PixelColor, B: FrameBufferBackend<Color = C>> FrameBuf<C, B> {
     /// let mut fbuff = FrameBuf::new(&mut data, 240, 135);
     /// ```
     pub fn new(data: B, width: usize, height: usize) -> Self {
+        Self::new_with_origin(data, width, height, Point::new(0, 0))
+    }
+
+    /// Create a new [`FrameBuf`] on top of an existing memory slice where pixels
+    /// from `.draw_iter()` are mapped relative to provided origin.
+    ///
+    /// # Panic
+    /// Panics if the size of the memory does not match the given width and
+    /// height.
+    ///
+    /// # Example
+    /// ```rust
+    /// use embedded_graphics::{pixelcolor::Rgb565, prelude::RgbColor, prelude::Point};
+    /// use embedded_graphics_framebuf::FrameBuf;
+    /// let mut data = [Rgb565::BLACK; 240 * 135];
+    /// let mut fbuff = FrameBuf::new_with_origin(&mut data, 240, 135, Point::new(100, 100));
+    /// ```
+    pub fn new_with_origin(data: B, width: usize, height: usize, origin: Point) -> Self {
         assert_eq!(
             data.nr_elements(),
             width * height,
@@ -113,6 +132,7 @@ impl<C: PixelColor, B: FrameBufferBackend<Color = C>> FrameBuf<C, B> {
             data,
             width,
             height,
+            origin,
         }
     }
 
@@ -129,6 +149,10 @@ impl<C: PixelColor, B: FrameBufferBackend<Color = C>> FrameBuf<C, B> {
     /// Get the framebuffers size.
     pub fn size(&self) -> Size {
         Size::new(self.width as u32, self.height as u32)
+    }
+
+    pub fn origin(&self) -> Point {
+        self.origin
     }
 
     fn point_to_index(&self, p: Point) -> usize {
@@ -239,7 +263,7 @@ impl<'a, C: PixelColor, B: FrameBufferBackend<Color = C>> Iterator for PixelIter
         }
         self.index += 1;
         let p = Point::new(x as i32, y as i32);
-        Some(Pixel(p, self.fbuf.get_color_at(p)))
+        Some(Pixel(self.fbuf.origin + p, self.fbuf.get_color_at(p)))
     }
 }
 
