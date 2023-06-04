@@ -56,7 +56,7 @@ Make sure you have your `rust` environment configurated
 
     ```toml
     [dependencies]
-    embedded-graphics-framebuf = "0.3.0"
+    embedded-graphics-framebuf = "0.4.0"
     ```
 2. Use the library in you code
     ```rust
@@ -106,7 +106,7 @@ Project Link: [https://github.com/bernii/embedded-graphics-framebuf](https://git
 
 ## Acknowledgments
 
-* proven examlpes from [adamgreid](https://github.com/adamgreig) ([imlplementation](https://github.com/adamgreig/walkclock-public/blob/master/firmware/src/framebuf.rs ))
+* proven examlpes from [adamgreid](https://github.com/adamgreig) ([implementation](https://github.com/adamgreig/walkclock-public/blob/master/firmware/src/framebuf.rs ))
 * [st7789](https://github.com/almindor/st7789) driver by almindor
 * super helpful [embedded-graphics](https://app.element.io/#/room/#rust-embedded-graphics:matrix.org) matrix chat
 
