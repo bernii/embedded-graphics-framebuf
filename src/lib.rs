@@ -113,7 +113,7 @@ impl<C: PixelColor, B: FrameBufferBackend<Color = C>> FrameBuf<C, B> {
     ///
     /// # Example
     /// ```rust
-    /// use embedded_graphics::{pixelcolor::Rgb565, prelude::RgbColor};
+    /// use embedded_graphics::{pixelcolor::Rgb565, prelude::RgbColor, prelude::Point};
     /// use embedded_graphics_framebuf::FrameBuf;
     /// let mut data = [Rgb565::BLACK; 240 * 135];
     /// let mut fbuff = FrameBuf::new_with_origin(&mut data, 240, 135, Point::new(100, 100));
