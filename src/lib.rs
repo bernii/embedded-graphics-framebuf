@@ -40,7 +40,7 @@
 //! ```
 
 #![no_std]
-use embedded_dma::ReadBuffer;
+use embedded_dma::{ReadBuffer, WriteBuffer};
 use embedded_graphics::{
     draw_target::DrawTarget,
     geometry::OriginDimensions,
@@ -274,6 +274,20 @@ unsafe impl<C: PixelColor, B: DMACapableFrameBufferBackend<Color = C>> ReadBuffe
     unsafe fn read_buffer(&self) -> (*const Self::Word, usize) {
         (
             (self.data.data_ptr() as *const Self::Word),
+            self.height
+                * self.width
+                * (core::mem::size_of::<C>() / core::mem::size_of::<Self::Word>()),
+        )
+    }
+}
+
+unsafe impl<C: PixelColor, B: DMACapableFrameBufferBackend<Color = C>> WriteBuffer
+    for FrameBuf<C, B>
+{
+    type Word = u8;
+    unsafe fn write_buffer(&mut self) -> (*mut Self::Word, usize) {
+        (
+            (self.data.data_ptr() as *mut Self::Word),
             self.height
                 * self.width
                 * (core::mem::size_of::<C>() / core::mem::size_of::<Self::Word>()),
