@@ -75,6 +75,22 @@ impl<C: PixelColor, const N: usize> FrameBufferBackend for [C; N] {
     }
 }
 
+/// Warning, this can panic, if the assumed size of the framebuffer (widht * height) is larger than the slice.
+impl<C: PixelColor> FrameBufferBackend for &mut [C] {
+    type Color = C;
+    fn set(&mut self, index: usize, color: C) {
+        self[index] = color
+    }
+
+    fn get(&self, index: usize) -> C {
+        self[index]
+    }
+
+    fn nr_elements(&self) -> usize {
+        self.len()
+    }
+}
+
 /// Backends implementing this Trait can be used for DMA.
 ///
 /// # Safety
