@@ -121,11 +121,11 @@ pub enum EndianCorrection {
 /// A backend for [`FrameBuf`](crate::FrameBuf) which changes the underlying
 /// byte order. This can be useful when using the buffer for DMA with
 /// peripherals that have a different endianness than the host.
-pub struct EndianCorrectedBuffer<'a, C: PixelColor> {
+pub struct EndianCorrectedBuffer<'a, C> {
     data: &'a mut [C],
     endian: EndianCorrection,
 }
-impl<'a, C: PixelColor> EndianCorrectedBuffer<'a, C> {
+impl<'a, C> EndianCorrectedBuffer<'a, C> {
     pub fn new(data: &'a mut [C], endian: EndianCorrection) -> Self {
         Self { data, endian }
     }

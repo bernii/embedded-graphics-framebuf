@@ -79,14 +79,14 @@ use backends::{DMACapableFrameBufferBackend, FrameBufferBackend};
 /// ```
 // TODO: Once https://github.com/rust-lang/rust/issues/76560 is resolved, change this to `pub struct
 // FrameBuf<C: PixelColor, const X: usize, const Y: usize>(pub [C; X * Y]);`
-pub struct FrameBuf<C: PixelColor, B: FrameBufferBackend<Color = C>> {
+pub struct FrameBuf<C, B: FrameBufferBackend<Color = C>> {
     pub data: B,
     width: usize,
     height: usize,
     origin: Point,
 }
 
-impl<C: PixelColor, B: FrameBufferBackend<Color = C>> FrameBuf<C, B> {
+impl<C, B: FrameBufferBackend<Color = C>> FrameBuf<C, B> {
     /// Create a new [`FrameBuf`] on top of an existing memory slice.
     ///
     /// # Panic
@@ -210,7 +210,7 @@ impl<'a, C: PixelColor, B: FrameBufferBackend<Color = C>> IntoIterator for &'a F
     }
 }
 
-impl<C: PixelColor, B: FrameBufferBackend<Color = C>> OriginDimensions for FrameBuf<C, B> {
+impl<C, B: FrameBufferBackend<Color = C>> OriginDimensions for FrameBuf<C, B> {
     fn size(&self) -> Size {
         self.size()
     }
@@ -247,7 +247,7 @@ impl<C: PixelColor, B: FrameBufferBackend<Color = C>> DrawTarget for FrameBuf<C,
 }
 
 /// An iterator for all [Pixels](Pixel) in the framebuffer.
-pub struct PixelIterator<'a, C: PixelColor, B: FrameBufferBackend<Color = C>> {
+pub struct PixelIterator<'a, C, B: FrameBufferBackend<Color = C>> {
     fbuf: &'a FrameBuf<C, B>,
     index: usize,
 }
@@ -267,7 +267,7 @@ impl<'a, C: PixelColor, B: FrameBufferBackend<Color = C>> Iterator for PixelIter
     }
 }
 
-unsafe impl<C: PixelColor, B: DMACapableFrameBufferBackend<Color = C>> ReadBuffer
+unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> ReadBuffer
     for FrameBuf<C, B>
 {
     type Word = u8;
@@ -281,7 +281,7 @@ unsafe impl<C: PixelColor, B: DMACapableFrameBufferBackend<Color = C>> ReadBuffe
     }
 }
 
-unsafe impl<C: PixelColor, B: DMACapableFrameBufferBackend<Color = C>> WriteBuffer
+unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> WriteBuffer
     for FrameBuf<C, B>
 {
     type Word = u8;
