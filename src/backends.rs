@@ -41,6 +41,13 @@ pub trait FrameBufferBackend {
     /// Returns a pixels color
     fn get(&self, index: usize) -> Self::Color;
 
+    /// Fills a line with a color, may be used with the slice copy methods for memory optimization
+    fn set_hline(&mut self, start: usize, width: usize, color: Self::Color) {
+        for pixel in start..width {
+            self.set(pixel, color);
+        }
+    }
+
     /// Nr of elements in the backend
     fn nr_elements(&self) -> usize;
 }
@@ -53,6 +60,10 @@ impl<C: PixelColor, const N: usize> FrameBufferBackend for &mut [C; N] {
 
     fn get(&self, index: usize) -> C {
         self[index]
+    }
+
+    fn set_hline(&mut self, start: usize, width: usize, color: Self::Color) {
+        self[start..start + width].fill(color)
     }
 
     fn nr_elements(&self) -> usize {
@@ -70,6 +81,10 @@ impl<C: PixelColor, const N: usize> FrameBufferBackend for [C; N] {
         self[index]
     }
 
+    fn set_hline(&mut self, start: usize, width: usize, color: Self::Color) {
+        self[start..start + width].fill(color)
+    }
+
     fn nr_elements(&self) -> usize {
         self.len()
     }
@@ -84,6 +99,10 @@ impl<C: PixelColor> FrameBufferBackend for &mut [C] {
 
     fn get(&self, index: usize) -> C {
         self[index]
+    }
+
+    fn set_hline(&mut self, start: usize, width: usize, color: Self::Color) {
+        self[start..start + width].fill(color)
     }
 
     fn nr_elements(&self) -> usize {
