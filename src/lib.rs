@@ -43,8 +43,9 @@
 use embedded_dma::{ReadBuffer, WriteBuffer};
 use embedded_graphics::{
     draw_target::DrawTarget,
-    geometry::OriginDimensions,
+    geometry::{Dimensions, OriginDimensions},
     prelude::{PixelColor, Point, Size},
+    primitives::Rectangle,
     Pixel,
 };
 
@@ -236,13 +237,32 @@ impl<C: PixelColor, B: FrameBufferBackend<Color = C>> DrawTarget for FrameBuf<C,
         Ok(())
     }
 
-    fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error> {
-        for y in 0..self.height {
-            for x in 0..self.width {
-                self.set_color_at(Point::new(x as i32, y as i32), color);
-            }
+    fn fill_solid(&mut self, area: &Rectangle, color: Self::Color) -> Result<(), Self::Error> {
+        // Clip Rectangle
+        let area = if self.bounding_box().intersection(area) != *area {
+            self.bounding_box().intersection(area)
+        } else {
+            *area
+        };
+
+        let Rectangle {
+            top_left: Point { x, y },
+            size: Size { width, height },
+        } = area;
+
+        for row in (y as u32)..(y as u32) + height {
+            self.data.set_hline(
+                self.point_to_index(Point::new(x, row as i32)),
+                width as usize,
+                color,
+            );
         }
+
         Ok(())
+    }
+
+    fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error> {
+        self.fill_solid(&self.bounding_box(), color)
     }
 }
 
@@ -372,6 +392,11 @@ mod tests {
             .draw(&mut fbuf)
             .unwrap();
 
+        Rectangle::new(Point::new(5, 5), Size::new(3, 3))
+            .into_styled(PrimitiveStyle::with_fill(BinaryColor::On))
+            .draw(&mut fbuf)
+            .unwrap();
+
         display.draw_iter(fbuf.into_iter()).unwrap();
         display.assert_pattern(&[
             "............",
@@ -379,9 +404,9 @@ mod tests {
             "..#########.",
             "............",
             "............",
-            ".###........",
-            ".###........",
-            ".###........",
+            ".###.###....",
+            ".###.###....",
+            ".###.###....",
             ".###........",
             ".###........",
             ".###........",
