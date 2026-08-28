@@ -45,7 +45,7 @@ pub trait FrameBufferBackend {
     fn nr_elements(&self) -> usize;
 }
 
-impl<'a, C: PixelColor, const N: usize> FrameBufferBackend for &'a mut [C; N] {
+impl<C: PixelColor, const N: usize> FrameBufferBackend for &mut [C; N] {
     type Color = C;
     fn set(&mut self, index: usize, color: C) {
         self[index] = color
@@ -105,7 +105,7 @@ pub unsafe trait DMACapableFrameBufferBackend: FrameBufferBackend {
 /// The implementation of the trait for all lifetimes `'a` is safe. However,
 /// this doesn't mean that the use of it is safe for all lifetimes. The
 /// requirements specified in [`embedded_dma::ReadBuffer::read_buffer`] remain.
-unsafe impl<'a, C: PixelColor, const N: usize> DMACapableFrameBufferBackend for &'a mut [C; N] {
+unsafe impl<C: PixelColor, const N: usize> DMACapableFrameBufferBackend for &mut [C; N] {
     fn data_ptr(&self) -> *const C {
         self.as_ptr()
     }
