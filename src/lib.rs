@@ -267,9 +267,7 @@ impl<'a, C: PixelColor, B: FrameBufferBackend<Color = C>> Iterator for PixelIter
     }
 }
 
-unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> ReadBuffer
-    for FrameBuf<C, B>
-{
+unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> ReadBuffer for FrameBuf<C, B> {
     type Word = u8;
     unsafe fn read_buffer(&self) -> (*const Self::Word, usize) {
         (
@@ -281,9 +279,7 @@ unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> ReadBuffer
     }
 }
 
-unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> WriteBuffer
-    for FrameBuf<C, B>
-{
+unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> WriteBuffer for FrameBuf<C, B> {
     type Word = u8;
     unsafe fn write_buffer(&mut self) -> (*mut Self::Word, usize) {
         (
