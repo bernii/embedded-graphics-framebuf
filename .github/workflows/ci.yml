@@ -9,88 +9,63 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+        uses: dtolnay/rust-toolchain@stable
       - name: Release build std
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --all-features
+        run: cargo build --release --all-features
 
   test:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+        run: cargo test
 
   clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Nightly with clippy
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
           components: clippy
-      - name: Annotate commit with clippy warnings std
-        uses: actions-rs/clippy-check@v1
-        with:
-          toolchain: nightly
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
-      - name: Annotate commit with clippy warnings no_std
-        uses: actions-rs/clippy-check@v1
-        with:
-          toolchain: nightly
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --no-default-features
+      - name: Clippy std
+        run: cargo clippy --all-features -- -D warnings
+      - name: Clippy no_std
+        run: cargo clippy --no-default-features -- -D warnings
 
   doc:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+        uses: dtolnay/rust-toolchain@stable
       - name: Documentation build
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
+        run: cargo doc
 
   coverage:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-tarpaulin
+        uses: taiki-e/install-action@v2
         with:
-          toolchain: stable
-          override: true
+          tool: cargo-tarpaulin
 
       - name: Run cargo-tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
-        with:
-          version: '0.15.0'
-          args: '-- --test-threads 1'
+        run: cargo tarpaulin --out Xml -- --test-threads 1
 
       #- name: Upload to codecov.io
         #uses: codecov/codecov-action@v1.0.2
@@ -106,13 +81,8 @@ jobs:
   security-audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
+      - uses: actions/checkout@v5
       - name: Security audit
-        uses: actions-rs/audit-check@v1
+        uses: rustsec/audit-check@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
