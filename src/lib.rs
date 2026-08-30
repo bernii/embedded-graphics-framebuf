@@ -333,13 +333,9 @@ mod tests {
 
     use super::*;
 
-    fn get_px_nums<C: PixelColor, B: FrameBufferBackend<Color = C>>(
+    fn get_px_nums<C: PixelColor + Hash + std::cmp::Eq, B: FrameBufferBackend<Color = C>>(
         fbuf: &FrameBuf<C, B>,
-    ) -> HashMap<C, i32>
-    where
-        C: Hash,
-        C: std::cmp::Eq,
-    {
+    ) -> HashMap<C, i32> {
         let mut px_nums: HashMap<C, i32> = HashMap::new();
         for px in fbuf.into_iter() {
             //for px in col {
@@ -401,7 +397,8 @@ mod tests {
             .draw(&mut fbuf)
             .unwrap();
 
-        display.draw_iter(fbuf.into_iter()).unwrap();
+        let framebuffer_iter = fbuf.into_iter();
+        display.draw_iter(framebuffer_iter).unwrap();
         display.assert_pattern(&[
             "............",
             "..#########.",
