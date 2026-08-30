@@ -40,7 +40,6 @@
 //! ```
 
 #![no_std]
-use embedded_dma::{ReadBuffer, WriteBuffer};
 use embedded_graphics::{
     draw_target::DrawTarget,
     geometry::{Dimensions, OriginDimensions},
@@ -48,6 +47,9 @@ use embedded_graphics::{
     primitives::Rectangle,
     Pixel,
 };
+
+#[cfg(feature = "embedded-dma")]
+use embedded_dma::{ReadBuffer, WriteBuffer};
 
 pub mod backends;
 use backends::{DMACapableFrameBufferBackend, FrameBufferBackend};
@@ -287,6 +289,7 @@ impl<'a, C: PixelColor, B: FrameBufferBackend<Color = C>> Iterator for PixelIter
     }
 }
 
+#[cfg(feature = "embedded-dma")]
 unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> ReadBuffer for FrameBuf<C, B> {
     type Word = u8;
     unsafe fn read_buffer(&self) -> (*const Self::Word, usize) {
@@ -299,6 +302,7 @@ unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> ReadBuffer for FrameB
     }
 }
 
+#[cfg(feature = "embedded-dma")]
 unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> WriteBuffer for FrameBuf<C, B> {
     type Word = u8;
     unsafe fn write_buffer(&mut self) -> (*mut Self::Word, usize) {
@@ -329,13 +333,9 @@ mod tests {
 
     use super::*;
 
-    fn get_px_nums<C: PixelColor, B: FrameBufferBackend<Color = C>>(
+    fn get_px_nums<C: PixelColor + Hash + std::cmp::Eq, B: FrameBufferBackend<Color = C>>(
         fbuf: &FrameBuf<C, B>,
-    ) -> HashMap<C, i32>
-    where
-        C: Hash,
-        C: std::cmp::Eq,
-    {
+    ) -> HashMap<C, i32> {
         let mut px_nums: HashMap<C, i32> = HashMap::new();
         for px in fbuf.into_iter() {
             //for px in col {
@@ -397,7 +397,8 @@ mod tests {
             .draw(&mut fbuf)
             .unwrap();
 
-        display.draw_iter(fbuf.into_iter()).unwrap();
+        let framebuffer_iter = fbuf.into_iter();
+        display.draw_iter(framebuffer_iter).unwrap();
         display.assert_pattern(&[
             "............",
             "..#########.",
