@@ -10,5 +10,9 @@ license = "MIT"
 description = "Frame buffer helper for embedded-graphics"
 
 [dependencies]
-embedded-dma = "0.2"
 embedded-graphics = "0.8"
+embedded-dma = {version = "0.2.0", optional = true}
+
+[features]
+default = ["embedded-dma"]
+embedded-dma = ["dep:embedded-dma"]
