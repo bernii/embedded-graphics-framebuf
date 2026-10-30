@@ -52,7 +52,7 @@ use embedded_graphics::{
 use embedded_dma::{ReadBuffer, WriteBuffer};
 
 pub mod backends;
-use backends::{DMACapableFrameBufferBackend, FrameBufferBackend};
+use backends::FrameBufferBackend;
 
 /// Constructs a frame buffer in memory. Lets you define the width(`X`), height
 /// (`Y`) and pixel type your using in your display (RGB, Monochrome etc.)
@@ -290,7 +290,7 @@ impl<'a, C: PixelColor, B: FrameBufferBackend<Color = C>> Iterator for PixelIter
 }
 
 #[cfg(feature = "embedded-dma")]
-unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> ReadBuffer for FrameBuf<C, B> {
+unsafe impl<C, B: backends::DMACapableFrameBufferBackend<Color = C>> ReadBuffer for FrameBuf<C, B> {
     type Word = u8;
     unsafe fn read_buffer(&self) -> (*const Self::Word, usize) {
         (
@@ -303,7 +303,9 @@ unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> ReadBuffer for FrameB
 }
 
 #[cfg(feature = "embedded-dma")]
-unsafe impl<C, B: DMACapableFrameBufferBackend<Color = C>> WriteBuffer for FrameBuf<C, B> {
+unsafe impl<C, B: backends::DMACapableFrameBufferBackend<Color = C>> WriteBuffer
+    for FrameBuf<C, B>
+{
     type Word = u8;
     unsafe fn write_buffer(&mut self) -> (*mut Self::Word, usize) {
         (
